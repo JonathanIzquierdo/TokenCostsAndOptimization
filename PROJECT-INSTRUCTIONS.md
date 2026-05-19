@@ -17,16 +17,16 @@ Escribir DOS entregables:
 Equipo técnico enterprise de Visma — desarrolladores y tech leads. No necesita explicar qué es un LLM ni qué es un token. Ya lo saben.
 
 ### El idioma
-Español.
+Español (versiones EN también disponibles en PROD/).
 
 ### Por qué ahora
 Dos eventos concretos dispararon el proyecto:
 
 **Evento 1 — Copilot usage-based billing:**
-GitHub Copilot migra a usage-based billing el 1 de junio 2026. Cada seat incluye tokens equivalentes al precio del seat ($19 Business, $39 Enterprise) + bonus 3 meses. Después se paga por token consumido. Los seat tokens son pooled a nivel enterprise Visma. La estimación interna es que la factura enterprise sube ~3x, pero puede variar radicalmente según cuánto usen los desarrolladores.
+GitHub Copilot migra a usage-based billing el 1 de junio 2026. Cada seat incluye tokens equivalentes al precio del seat ($19 Business, $39 Enterprise) + bonus 3 meses. Después se paga por token consumido. Los seat tokens son pooled a nivel enterprise Visma.
 
 **Evento 2 — VSCode feature:**
-En el último VSCode se puede habilitar `chat.tools.compressOutput.enabled` para post-procesar el output de terminal antes de enviarlo al modelo — ahorrando tokens de contexto automáticamente. Esto motivó explorar qué más existe.
+En el último VSCode se puede habilitar `chat.tools.compressOutput.enabled` para post-procesar el output de terminal antes de enviarlo al modelo.
 
 ---
 
@@ -36,176 +36,141 @@ En el último VSCode se puede habilitar `chat.tools.compressOutput.enabled` para
 |------|-------------|--------|
 | 1 | Recolección de información | ✅ Completado |
 | 2 | Organización y estructura | ✅ Completado |
-| 3 | Optimización con data adicional | ⏳ Pendiente |
-| 4 | Redacción del artículo | ⏳ Pendiente |
-| 5 | Redacción de documentación técnica | ⏳ Pendiente |
-
-**Próximo paso al retomar:** Revisar el outline en `article/outline.md` y decidir si hace falta buscar más data antes de redactar. Si el outline está aprobado, ir directo a la redacción.
-
----
-
-## TEMAS CONFIRMADOS (12 temas + 3 adicionales)
-
-### Temas principales
-1. **Selección de modelo según tarea y costo** → `research/02-model-selection.md`
-2. **MCPs activos innecesariamente** → `research/02-model-selection.md`
-3. **Ingeniería de contexto para agentes** → `research/01-context-and-token-waste.md`
-4. **Prompt caching y memory compression** → `research/03-prompt-caching.md`
-5. **Azure EA discount (rango negociado 15-28%, NO número fijo)** → `research/07-azure-deepseek.md`
-6. **DeepSeek via Azure (compliance europeo, no precio)** → `research/07-azure-deepseek.md`
-7. **Herramientas de medición VSCode + oTel** → `research/06-vscode-tools.md`
-8. **`chat.tools.compressOutput.enabled` en VSCode** → `research/06-vscode-tools.md`
-9. **Copilot usage-based billing desde junio 2026** → `research/05-copilot-billing.md`
-10. **Output tokens 4-6x más caros que input** → `research/01-context-and-token-waste.md`
-11. **Auto routing Copilot/OpenRouter (Nivel 1)** → `research/04-model-routing.md`
-12. **RouteLLM + Gateways LiteLLM/Portkey (Niveles 2 y 3)** → `research/04-model-routing.md`
-
-### Temas adicionales verificados
-- **Compaction API Anthropic** (beta enero 2026) → `research/08-batch-and-compaction.md`
-- **Batch API Anthropic** (50% descuento) → `research/08-batch-and-compaction.md`
-- **Extended thinking tokens** (costo oculto) → `research/09-extended-thinking-costs.md`
+| 3 | Redacción del artículo | ✅ Borrador v1 en PROD/ |
+| 4 | Redacción de documentación técnica | ✅ Borrador v1 en PROD/ |
+| 5 | Visualizaciones y diseño | 🔄 En curso — briefs en PROD/ |
+| 6 | Review y refinamiento final | ⏳ Pendiente |
 
 ---
 
-## TEMAS DESCARTADOS Y POR QUÉ
+## HERRAMIENTAS DEL PROYECTO
 
-### "Lost in the middle" (contexto largo degrada accuracy)
-**Descartado.** El artículo es sobre costos y gobernanza de tokens, no sobre calidad de respuestas. El argumento de que el contexto largo puede degradar la performance es un tema de prompt engineering, no de economía de tokens. El vínculo con el costo es demasiado indirecto. Si aparece naturalmente al hablar de context engineering, se menciona de paso — no como punto principal.
+Este proyecto usa dos herramientas de AI con roles distintos:
 
-### Criterio general para descartar temas
-Cada tema nuevo debe pasar este filtro antes de incluirse:
-- ¿Esto mueve la factura directamente?
-- ¿Es accionable para el equipo esta semana?
-- ¿El vínculo con el costo es directo e inevitable, o hay que construir un puente largo?
+### Claude Code
+- Mejora el contenido: agrega datos, verifica fuentes, actualiza archivos, busca información nueva
+- Mantiene el repo organizado
+- **Regla crítica:** nunca agregar números, porcentajes o métricas sin fuente verificada en `data/verified-metrics.md`
+- Si un número no tiene URL real como fuente, marcarlo `[VERIFICAR]` y buscarlo antes de publicarlo
 
-Si la respuesta a las primeras dos es "no" o "quizás", se descarta o se menciona de paso.
+### Claude Design
+- Toma los briefs en `PROD/claude-design-brief-*.md` y genera los visuales
+- Formatea los artículos para facilidad de lectura
+- **Regla crítica:** cada visual debe tener caption con URL de fuente
+- Solo usar datos que estén en el brief correspondiente — no inventar ni estimar métricas
+- Archivos de brief: `PROD/claude-design-brief-EN.md` y `PROD/claude-design-brief-ES.md`
+
+### Workflow de mejora
+1. **Claude Code** agrega contenido, verifica datos, actualiza `data/verified-metrics.md`
+2. **Claude Design** toma los artículos actualizados y los briefs para agregar visuales y mejorar formato
+3. Los resultados se guardan en `PROD/` con sufijo `-final` cuando están aprobados
 
 ---
 
 ## REGLAS CRÍTICAS
 
 ### Regla 1: Ningún número sin fuente verificada
-Ningún dato numérico o porcentaje puede usarse en el artículo sin una URL de artículo o estudio real. Si un número no tiene fuente, se marca `[VERIFICAR]` y se busca antes de escribir. No interpolar ni estimar métricas.
+Ningún dato numérico o porcentaje puede usarse en el artículo, documentación, o visuales sin una URL de artículo o estudio real. Si un número no tiene fuente, se marca `[VERIFICAR]` y se busca antes de escribir. No interpolar ni estimar métricas.
 
 Todos los datos verificados están en `data/verified-metrics.md` con sus fuentes.
 
+### Regla 1b: Ningún visual sin fuente verificada
+Esta regla aplica también a gráficos, diagramas y tablas visuales. Cada visual debe tener:
+- Un caption que mencione la fuente
+- La URL directa al artículo o estudio que respalda el número
+- Solo datos que estén en `data/verified-metrics.md` o en el brief correspondiente
+
 ### Regla 2: Foco en costo y gobernanza
-Temas de accuracy o calidad de respuesta solo se incluyen si el vínculo con el costo es directo e inevitable. Evitar desvíos hacia prompt engineering o performance de modelo por sí solos.
+Temas de accuracy o calidad de respuesta solo se incluyen si el vínculo con el costo es directo e inevitable.
 
 ### Regla 3: No asumir que el lector no sabe nada
-La audiencia son desarrolladores y tech leads de Visma. No explicar qué es un token, qué es un LLM, ni conceptos básicos. Ir directo al punto.
+La audiencia son desarrolladores y tech leads. No explicar conceptos básicos.
 
 ### Regla 4: Tono de colega, no de manual corporativo
-El artículo debe sentirse como alguien del equipo que descubrió algo importante y lo comparte — no como documentación oficial ni como post de marketing.
+El artículo debe sentirse como alguien del equipo que descubrió algo importante y lo comparte.
+
+---
+
+## ARCHIVOS DEL REPOSITORIO
+
+```
+README.md                              — Overview general
+PROJECT-INSTRUCTIONS.md               — Este archivo
+claude-multiproject.md                 — Onboarding rápido para cualquier agente AI
+research/
+  01-context-and-token-waste.md
+  02-model-selection.md
+  03-prompt-caching.md
+  04-model-routing.md
+  05-copilot-billing.md
+  06-vscode-tools.md
+  07-azure-deepseek.md
+  08-batch-and-compaction.md
+  09-extended-thinking-costs.md
+data/
+  verified-metrics.md                 — TODOS los números con fuente y URL verificada
+article/
+  outline.md
+PROD/
+  article-draft-v1.md                 — Artículo en español (borrador v1)
+  article-draft-v1-EN.md              — Artículo en inglés (borrador v1)
+  technical-docs-draft-v1.md          — Documentación técnica en español
+  technical-docs-draft-v1-EN.md       — Documentación técnica en inglés
+  JON.md                              — Índice ejecutivo en español
+  JON-EN.md                           — Índice ejecutivo en inglés
+  claude-design-brief-ES.md           — Brief para Claude Design (español)
+  claude-design-brief-EN.md           — Brief para Claude Design (inglés)
+```
 
 ---
 
 ## DECISIONES TOMADAS
 
 ### Modelo para redacción
-**Claude Sonnet 4** (`claude-sonnet-4-20250514`)
-
-Por qué Sonnet 4 y no Opus 4: Opus 4 es más poderoso pero más caro. Este proyecto no requiere razonamiento complejo — es escritura técnica con estructura clara y datos ya recolectados. Usar Opus 4 sería exactamente el anti-patrón que el artículo critica. Sonnet 4 da la mejor relación calidad/costo para esta tarea, y además es coherente con el mensaje del artículo.
+**Claude Sonnet 4** (`claude-sonnet-4-20250514`) — mejor relación calidad/costo para esta tarea.
 
 ### Azure "24% de descuento"
-El número 24% que circula internamente en Visma es un acuerdo negociado específico, no un precio de lista publicado. El rango verificado es 15-28% dependiendo del leverage comercial (EA solo vs EA + MACC). En el artículo debe presentarse como rango negociable, no como número fijo.
+Rango verificado: 15–28% negociado. Nunca presentar como número fijo.
 
 ### DeepSeek via Azure
-El ángulo correcto NO es ahorro de costo (Azure cobra 20-35% más que DeepSeek directo). El ángulo es compliance: accedés a un modelo muy barato sin enviar datos a China, manteniendo data residency europeo. Incluso con el markup de Azure, DeepSeek via Azure es ~15x más barato que Claude Sonnet para tareas de alta volumetría.
+El ángulo es compliance, no precio. Azure cobra 20–35% más que directo pero resuelve data residency europeo.
+
+### Tema descartado: "Lost in the middle"
+Vínculo con el costo demasiado indirecto. Descartado como punto standalone.
 
 ---
 
 ## DATOS VERIFICADOS — RESUMEN EJECUTIVO
 
-Los datos completos están en `data/verified-metrics.md`. Aquí los más importantes:
-
 | Dato | Valor | Fuente |
 |------|-------|--------|
-| Contexto re-enviado = % de la factura | 62% | LeanOps 2026 (30 equipos) |
-| Tokens en conversación de 20 turnos | 5K-10K innecesarios | Redis 2026 |
-| Tokens turno 1 vs turno 50 (agentes) | 5K → 200K | Redblink |
+| Contexto re-enviado = % de la factura | 62% | LeanOps 2026 |
+| Tokens turno 1 vs turno 50 | 5K → 200K | Redblink |
 | Multiplicador output vs input | 4–6x | Redis 2026 |
-| Descuento prompt caching (Anthropic) | 90% en cache reads | Anthropic oficial |
-| RouteLLM: calidad GPT-4 con % llamadas | 95% calidad con 26% llamadas | LMSYS ICLR 2025 |
-| RouteLLM con augmentation: ahorro | 75% reducción | LMSYS ICLR 2025 |
-| Copilot top usuarios = % del spend | 10-15% usuarios = 60-70% | Synapx |
-| Multiplicador workflows agénticos | ~3.5x flat fee anterior | Synapx |
-| Copilot Auto Mode descuento | 10% en multiplicador | GitHub Changelog |
-| Batch API descuento | 50% en input y output | Anthropic oficial |
-| Batch + caching combinados | hasta 95% de ahorro | PECollective |
-| Extended thinking: display omitted ahorra | $0 (se cobra igual) | CheckThat.ai |
-| DeepSeek via Azure markup | +20-35% sobre directo | DeployBase |
-| Azure EA discount | 15-28% (negociado) | Microsoft Negotiations |
+| Descuento prompt caching | 90% en cache reads | Anthropic oficial |
+| RouteLLM calidad/llamadas | 95% calidad con 26% llamadas | LMSYS ICLR 2025 |
+| RouteLLM con augmentation | 75% reducción | LMSYS ICLR 2025 |
+| Copilot top usuarios = spend | 10–15% = 60–70% | Synapx |
+| Multiplicador agéntico | ~3.5x flat fee | Synapx |
+| Auto Mode descuento | 10% en multiplicador | GitHub Changelog |
+| Batch API | 50% descuento | Anthropic oficial |
+| Batch + caching | hasta 95% de ahorro | PECollective |
+| Extended thinking omitted | No ahorra nada | CheckThat.ai |
+| Opus 4.7 tokenizer overhead | hasta 35% más tokens | Finout |
+| DeepSeek via Azure markup | +20–35% sobre directo | DeployBase |
+| Azure EA discount | 15–28% negociado | Microsoft Negotiations |
 
----
-
-## FUENTES CLAVE
-
-- https://leanopstech.com/blog/agentic-ai-cost-runaway-token-budget-2026/
-- https://redis.io/blog/llm-token-optimization-speed-up-apps/
-- https://redblink.com/ai-token-cost-optimization/
-- https://www.tokenoptimize.dev/guides/llm-token-optimization-strategies
-- https://mem0.ai/blog/context-engineering-ai-agents-guide
-- https://ai.koombea.com/blog/llm-cost-optimization
-- https://github.blog/news-insights/company-news/github-copilot-is-moving-to-usage-based-billing/
-- https://docs.github.com/en/copilot/concepts/billing/organizations-and-enterprises
-- https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing
-- https://www.synapx.com/github-copilot-usage-based-billing-executive-guide/
-- https://github.blog/changelog/2026-04-17-github-copilot-cli-now-supports-copilot-auto-model-selection/
-- https://www.openempower.com/blog/github-copilot-token-based-billing-enterprise-ai-cost-governance
-- https://www.lmsys.org/blog/2024-07-01-routellm/
-- https://github.com/lm-sys/RouteLLM
-- https://openrouter.ai/docs/guides/routing/routers/auto-router
-- https://openrouter.ai/works-with-openrouter/github-copilot
-- https://www.edenai.co/post/best-llm-routers
-- https://techsy.io/en/blog/best-llm-gateway-tools
-- https://www.finout.io/blog/anthropic-api-pricing
-- https://pecollective.com/tools/anthropic-api-pricing/
-- https://www.metacto.com/blogs/anthropic-api-pricing-a-full-breakdown-of-costs-and-integration
-- https://platform.claude.com/docs/en/build-with-claude/compaction
-- https://claudelab.net/en/articles/api-sdk/compaction-api-context-management
-- https://checkthat.ai/brands/anthropic/pricing
-- https://platform.claude.com/docs/en/build-with-claude/extended-thinking
-- https://code.visualstudio.com/updates/v1_120
-- https://visualstudiomagazine.com/articles/2026/04/30/vs-code-curbs-token-use-ahead-of-copilots-controversial-usage-based-billing-switch.aspx
-- https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing
-- https://atonementlicensing.com/blog/openai-enterprise-pricing/
-- https://tokenmix.ai/blog/azure-openai-cost
-- https://deploybase.ai/articles/deepseek-v3-pricing
-- https://techjacksolutions.com/ai-tools/deepseek/deepseek-pricing/
-- https://medium.com/@arvisionlab/prompt-caching-for-ai-agents-how-to-cut-cost-and-latency-without-breaking-context-245dc2502b4b
-- https://www.parloa.com/knowledge-hub/prompt-caching/
-- https://blogs.idc.com/2025/11/17/the-future-of-ai-is-model-routing/
-- https://www.swfte.com/blog/intelligent-llm-routing-multi-model-ai
-- https://www.augmentcode.com/guides/ai-model-routing-guide
-- https://www.mindstudio.ai/blog/what-is-ai-model-router-optimize-cost-llm-providers
-- https://inworld.ai/resources/best-llm-router-ai-gateway
-- https://www.pkgpulse.com/guides/portkey-vs-litellm-vs-openrouter-llm-gateway-2026
-- https://www.cloudzero.com/blog/claude-api-pricing/
-- https://deepwiki.com/anthropics/claude-cookbooks/6.3-context-management-and-compaction
-- https://blog.logrocket.com/llm-context-problem-strategies-2026/
-- https://www.getmaxim.ai/articles/context-engineering-for-ai-agents-production-optimization-strategies/
-- https://www.infoworld.com/article/4164236/github-shifts-copilot-to-usage-based-billing-signaling-new-cost-model-for-enterprise-ai-tools.html
+Datos completos con URLs en `data/verified-metrics.md`.
 
 ---
 
 ## CÓMO RETOMAR EL PROYECTO
 
-### Para retomar con cualquier AI (Claude, ChatGPT, etc.)
+### Para Claude Code
+Leer este archivo + `claude-multiproject.md` + `data/verified-metrics.md`. Luego trabajar en los archivos de `PROD/` según lo que se necesite mejorar.
 
-Compartir este mensaje al inicio de la conversación:
+### Para Claude Design
+Leer `PROD/claude-design-brief-EN.md` o `PROD/claude-design-brief-ES.md` según el idioma. El brief contiene todos los datos, fuentes, y especificaciones de los visuales a generar.
 
-> "Estoy trabajando en un proyecto de artículo técnico sobre optimización de tokens en IA para un equipo enterprise. El proyecto está documentado en GitHub en JonathanIzquierdo/TokenCostsAndOptimization. Lee el archivo PROJECT-INSTRUCTIONS.md para entender el contexto completo, luego lee article/outline.md para ver la estructura, y data/verified-metrics.md para los datos disponibles. El estado actual es: Pasos 1 y 2 completados, próximo paso es revisar el outline y arrancar la redacción del artículo."
-
-### Archivos clave por orden de lectura
-1. `PROJECT-INSTRUCTIONS.md` ← este archivo
-2. `article/outline.md` ← estructura del artículo
-3. `data/verified-metrics.md` ← todos los datos con fuentes
-4. `research/0X-*.md` ← profundidad por tema específico
-
-### Flujo recomendado para continuar
-1. Revisar `article/outline.md` — ¿la estructura tiene sentido? ¿falta algo?
-2. Si hace falta más data: buscar en web, agregar a `data/verified-metrics.md` y al archivo de research correspondiente
-3. Redactar el artículo siguiendo el outline, usando los datos de `verified-metrics.md`
-4. Redactar la documentación técnica (los archivos de `research/` son la base)
-5. Review final: verificar que todos los números tienen fuente, el tono es correcto, y los links a la documentación funcionan
+### Mensaje de onboarding universal
+> "Trabajá en el repositorio JonathanIzquierdo/TokenCostsAndOptimization. Leé primero `claude-multiproject.md` y `PROJECT-INSTRUCTIONS.md`. Para agregar visuales al artículo en inglés, leé `PROD/claude-design-brief-EN.md`. Para contenido en español, `PROD/claude-design-brief-ES.md`. Regla crítica: ningún número sin URL verificada en `data/verified-metrics.md`."
