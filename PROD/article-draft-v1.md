@@ -96,7 +96,51 @@ La buena noticia es que hay capas concretas de optimización disponibles hoy. Al
 
 ---
 
-## Sección 3 — Las capas de optimización
+## Sección 3 — Antes de las capas: en qué relación estás con el modelo
+
+Hay una decisión que es anterior a cualquier técnica de optimización, y que determina qué técnicas tenés disponibles. No es sobre qué modelo elegís. Es sobre **cómo lo estás consumiendo**.
+
+### Producto cerrado vs API key
+
+Si tu equipo consume IA solamente desde **Claude.ai, ChatGPT, Copilot, Cursor** — productos terminados — está en el primer grupo: usuarios de caja cerrada. Las palancas que tenés disponibles son reales pero limitadas. Podés activar Auto Mode en Copilot (10% de descuento), podés configurar compressOutput y tool search en VSCode (hasta 20% de ahorro), podés auditar qué MCPs tenés activos. Todo eso suma. Pero no podés activar prompt caching, no podés elegir batch processing, no podés controlar el extended thinking, no podés setear `max_tokens`. Esas palancas no están expuestas.
+
+Si tu equipo construye con **API key contra Anthropic, OpenAI, DeepSeek o el proveedor que sea**, está en el segundo grupo: constructores. Y acá es donde aparecen los números grandes. El 90% de descuento del prompt caching. El 50% del batch API. El 95% combinado. El 25x de diferencia entre Haiku y Opus. Las palancas que mueven la factura en serio viven en código de aplicación.
+
+Es la diferencia entre usar Excel y construir una hoja de cálculo personalizada. Ambas resuelven problemas. La segunda los resuelve a tu medida.
+
+### Si vamos a construir, ¿dónde compramos la API?
+
+Una vez que aceptás que querés construir con API, aparece la pregunta de procurement: vendor directo o vía hyperscaler. La intuición común de los equipos enterprise es que el hyperscaler conviene por el descuento EA. Los datos cuentan otra historia.
+
+Para Claude y para GPT, el precio nominal por token es **idéntico** entre el vendor directo y el hyperscaler. Anthropic mantiene pricing parity en Bedrock, Vertex y Foundry. OpenAI lo mantiene en Azure OpenAI. El descuento EA no es sobre el token — es sobre la factura total de Microsoft.
+
+Lo que hace al hyperscaler más caro no es el precio del token. Es lo que se acumula alrededor. En Azure OpenAI, support plans mandatorios, data egress, networking, fine-tuned model hosting que se cobra aun sin uso. Tres fuentes independientes ([TokenMix](https://tokenmix.ai/blog/azure-openai-cost), [Inference.net](https://inference.net/content/azure-openai-pricing-explained/), [CloudZero](https://www.cloudzero.com/blog/azure-openai-pricing/)) coinciden: **el TCO efectivo de Azure OpenAI corre 15–40% por encima de OpenAI directo**, con el cliente promedio en +22%. En Bedrock para Claude pasa algo parecido — el precio per-token es idéntico, pero entre cross-region endpoints (+10%), data transfer, y billing de errores HTTP 500, el TCO efectivo termina **20–35% por encima del directo**. ([TokenMix Bedrock](https://tokenmix.ai/blog/aws-bedrock-pricing))
+
+Hacé la cuenta con cualquier escenario de descuento EA y vas a ver lo mismo: el descuento del 15–25% (o 23–28% con MACC) **compensa pero no supera** el overhead. La factura final queda entre -14% y +12% vs el vendor directo. En muchos casos, ir vía hyperscaler termina costando lo mismo o un poco más.
+
+Y hay una trampa específica que pocas empresas conocen hasta que les llega: **los créditos Azure / Founders Hub / MACC no se aplican a Claude en Microsoft Foundry**. Claude se factura ahí como Marketplace de terceros, directo a tarjeta de crédito. ([AZ365.ai](https://az365.ai/blog/claude-on-azure-the-marketplace-billing-trap/), [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/5851352)). Una startup acumuló $13.000 USD en un mes pensando que sus credits de Foundry cubrían Claude. No los cubrieron. Si tu organización está cerrando un acuerdo con Microsoft y planea consumir Claude vía Foundry asumiendo que el MACC lo absorbe, ese es exactamente el momento de pedir aclaración escrita.
+
+### Entonces, ¿por qué iría al hyperscaler?
+
+Por una razón que no es el precio: **compliance**. Si tus datos son europeos y caen bajo GDPR, si manejás información de salud o financiera regulada, si tu organización tiene mandato corporativo de que todo corra en Azure o AWS — el overhead deja de ser overhead y pasa a ser prima de compliance. Estás pagando por el contrato, no por el modelo.
+
+El caso más claro es DeepSeek. El modelo en sí es ultra-barato (~15x más barato que Sonnet input) pero la API directa rutea los datos por servidores chinos, lo que lo hace inviable para cualquier empresa europea con datos de clientes. DeepSeek vía Azure cuesta 20–35% más caro que directo, pero los datos quedan en la región Azure que elegiste, el contrato es con Microsoft, y el compliance europeo está resuelto. Aún con el markup, sigue siendo dramáticamente más barato que correr el mismo workload contra Sonnet. ([DeployBase](https://deploybase.ai/articles/deepseek-v3-pricing))
+
+| Escenario | Costo directo | Costo Azure | Costo Bedrock | Neto vs directo |
+|-----------|---------------|--------------|----------------|------------------|
+| GPT-5.4, sin compliance, sin descuento | 100 | 115–140 | n/a | **+15% a +40%** |
+| GPT-5.4, con EA -20% | 100 | 92–112 | n/a | **-8% a +12%** |
+| GPT-5.4, con EA+MACC -25% | 100 | 86–105 | n/a | **-14% a +5%** |
+| Claude Sonnet, sin compliance | 100 | n/a (Foundry sin desc.) | 120–135 | **+20% a +35% Bedrock** |
+| DeepSeek con GDPR EU | inviable | 120–135 | n/a | **prima de compliance** |
+
+La línea para llevarse: el hyperscaler no se elige por descuento — se elige por compliance, por mandato corporativo, o porque el modelo lo necesita para ser usable en enterprise. Si ninguno de los tres aplica, el vendor directo gana en precio neto y en velocidad de features (las betas y nuevas capacidades salen primero en la API del fabricante).
+
+Si tu organización está negociando acuerdos con vendors en este momento, este es el dato que conviene llevar a la mesa: el descuento que te ofrecen no se compara contra el precio de lista del hyperscaler. Se compara contra el precio del vendor directo más el overhead del hyperscaler. Y ese cálculo cambia completamente lo que vale el descuento.
+
+---
+
+## Sección 4 — Las capas de optimización
 
 No existe una sola palanca que resuelva el problema. Existe una secuencia de capas, cada una más técnica que la anterior, cada una con mayor impacto potencial. Podés aplicar solo las primeras y ya notás diferencia. Podés aplicar todas y cambiar radicalmente la economía de tu uso de AI.
 
@@ -188,9 +232,9 @@ En lugar de decidir manualmente qué modelo usar, un sistema decide por request.
 
 **Batch API:** 50% de descuento para workloads sin necesidad de respuesta en tiempo real. Combinado con caching: hasta 95% de ahorro vs un request estándar.
 
-**DeepSeek via Azure:** el modelo más barato del mundo (~$0.19/MTok via Azure) con compliance europeo. 15x más barato que Sonnet para tareas de alta volumetría. El acceso directo a DeepSeek no es viable por data residency — Azure resuelve eso.
+**DeepSeek via Azure:** el modelo más barato del mundo (~$0.19/MTok via Azure) con compliance europeo. 15x más barato que Sonnet para tareas de alta volumetría. El acceso directo a DeepSeek no es viable por data residency. Azure agrega 20–35% de markup sobre el directo, pero ese markup es prima de compliance — y aun pagándolo, sigue siendo dramáticamente más barato que cualquier alternativa enterprise. Es el ejemplo más limpio de "el hyperscaler vale la pena cuando compra compliance, no descuento".
 
-**Negociación del EA:** el descuento en Copilot via Enterprise Agreement es negociado, no publicado. El rango documentado: 15-25% con EA solo, 23-28% con EA + Azure MACC.
+**Negociación del EA:** el descuento en Copilot via Enterprise Agreement es negociado, no publicado. El rango documentado: 15–25% con EA solo, 23–28% con EA + Azure MACC. Importante: como vimos en la sección anterior, este descuento típicamente compensa pero no supera el overhead Azure. La decisión real de proveedor se gana o se pierde por compliance, no por descuento. Si la organización está cerrando acuerdos con vendors en este momento, conviene llevar el dato del overhead a la mesa de negociación — porque define el verdadero break-even del descuento que te ofrecen.
 
 ---
 
@@ -229,8 +273,8 @@ El objetivo no es gastar menos. Es gastar bien.
 
 **A mediano plazo:**
 - Evaluar RouteLLM o un AI gateway para sistemas agénticos en producción
-- Negociar el EA de Microsoft en el próximo renewal incluyendo Copilot en el contexto del MACC
-- Explorar DeepSeek via Azure para workloads de alta volumetría
+- Negociar el EA de Microsoft en el próximo renewal incluyendo Copilot en el contexto del MACC — con el dato del overhead Azure encima de la mesa
+- Explorar DeepSeek via Azure para workloads de alta volumetría con datos EU
 
 ---
 
