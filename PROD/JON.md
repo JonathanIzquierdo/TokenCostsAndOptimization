@@ -14,6 +14,121 @@ Una sesión agéntica que empieza en 5.000 tokens puede llegar a **200.000 token
 
 ---
 
+## El cambio de paradigma: vendor cerrado vs construir con API
+
+Antes de entrar a las palancas de optimización hay una decisión fundacional que determina qué palancas existen para vos: **en qué relación estamos con el modelo.**
+
+### Producto cerrado vs API key
+
+**Como usuarios de producto cerrado** (Claude.ai, ChatGPT, Copilot, Cursor): el proveedor controla todos los parámetros. Pagás suscripción, consumís. Las palancas de optimización disponibles son limitadas pero existen:
+- Elegir el modelo del dropdown cuando el producto lo permite
+- Activar Auto Mode en Copilot (10% descuento)
+- Configurar `compressOutput` y tool search en VSCode (hasta 20% ahorro)
+- Auditar qué MCPs tenés activos
+- Inspeccionar consumo con Agent Debug Log y Chat Debug View
+
+Sirven, pero el techo es bajo. No podés tocar thinking budgets, no podés activar prompt caching, no podés elegir batch processing, no podés rutear a Haiku desde Sonnet, no podés setear `max_tokens`.
+
+**Como constructores con API key** (Anthropic, OpenAI, DeepSeek, etc., consumidos desde código propio): todas las palancas son tuyas. Los ahorros del 50%, 90% y 95% que aparecen en este documento viven acá:
+- Prompt caching: hasta **90% de descuento** sobre lo cacheado
+- Batch API: **50% de descuento** sobre input y output, stacks con caching → hasta **95%**
+- Output budgets explícitos por tarea (5–25x menos tokens en outputs caros)
+- Extended thinking controlado o desactivado (evita el 5x multiplier)
+- Routing entre modelos (hasta 25x diferencia entre Haiku y Opus)
+- Gateways con budget controls por equipo (LiteLLM, Portkey, OpenRouter)
+
+**Este documento asume que estás construyendo, o vas hacia ahí.** Las capas que siguen son palancas accionables desde código de aplicación, settings de IDE, o capas de routing — no desde la app de escritorio.
+
+---
+
+## Vendor directo vs hyperscaler: la decisión de procurement
+
+Cuando se decide construir con API, la siguiente pregunta es **dónde comprarla**: vendor directo (Anthropic, OpenAI, DeepSeek) o vía hyperscaler (Azure OpenAI / Microsoft Foundry, AWS Bedrock, Google Vertex AI).
+
+La intuición común — "el hyperscaler me sale más barato por el descuento EA" — es **frecuentemente falsa** o se compensa apenas. Los datos verificados, todos de fuentes 2026:
+
+### Precios nominales por modelo (mayo 2026)
+
+| Modelo | Vendor directo | Vía hyperscaler | Diferencia nominal |
+|--------|----------------|------------------|---------------------|
+| Claude Sonnet 4.6 | $3 / $15 per MTok ([Anthropic](https://platform.claude.com/docs/en/about-claude/pricing)) | Mismo precio en Bedrock global, Vertex global, Foundry ([Anthropic docs](https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry)) | 0% nominal |
+| Claude Sonnet 4.6 (regional EU) | $3 / $15 + 10% data residency | $3 / $15 + 10% regional endpoint | Mismo overhead |
+| Claude Opus 4.7 | $5 / $25 per MTok | Mismo en hyperscalers | 0% nominal |
+| Claude Haiku 4.5 | $1 / $5 per MTok | Mismo en hyperscalers | 0% nominal |
+| GPT-5.4 | $2.50 / $15 ([OpenAI](https://openai.com/api/pricing/)) | Azure OpenAI mismo per-token | 0% nominal |
+| GPT-5.5 (flagship) | $5 / $30 ([Finout](https://www.finout.io/blog/openai-pricing-in-2026)) | Azure OpenAI mismo per-token | 0% nominal |
+| DeepSeek V4-Flash | $0.14 / $0.28 ([TLDL](https://www.tldl.io/resources/anthropic-api-pricing)) | Vía Azure: ~$0.19 / $0.38 | +20–35% ([DeployBase](https://deploybase.ai/articles/deepseek-v3-pricing)) |
+
+**Lectura:** para Claude y GPT, el precio por token nominal es **idéntico** en vendor directo y hyperscaler. Para DeepSeek hay markup directo del 20–35% vía Azure (Azure cobra premium por hostear un modelo no propio de Microsoft).
+
+### TCO efectivo: la trampa del overhead
+
+El problema no es el precio nominal — es lo que se acumula alrededor:
+
+**Azure OpenAI:** TCO efectivo **15–40% por encima de OpenAI directo**. Promedio del cliente típico: **+22%**. Fuentes:
+- [TokenMix, mayo 2026](https://tokenmix.ai/blog/azure-openai-cost): "Token pricing identical. Total cost runs 15-40% higher on Azure due to support plans, data transfer, storage, and network infrastructure."
+- [Inference.net, enero 2026](https://inference.net/content/azure-openai-pricing-explained/): mismo dato confirmado con desglose por componente.
+- [CloudZero, mayo 2026](https://www.cloudzero.com/blog/azure-openai-pricing/): "production deployments typically add 20–40% above listed token rates"
+
+¿De dónde viene ese overhead?
+- Support plans: $100–$1.000+/mes (mandatorios para producción)
+- Data egress: $0.087/GB después de los primeros 100GB
+- Fine-tuned model hosting: $1.70–$3/hora **aun sin uso** = $1.224–$2.160/mes
+- VNet integration, Private Link, content filtering: $200–$2.000/mes
+- Log Analytics y monitoring infra
+
+**AWS Bedrock para Claude:** precio per-token idéntico al directo, **pero TCO efectivo 20–35% más alto en promedio**. ([TokenMix Bedrock 2026](https://tokenmix.ai/blog/aws-bedrock-pricing)) Causas:
+- Regional/multi-region endpoints: +10% sobre global (oficial de Anthropic)
+- Cross-region inference: +10% adicional
+- Data transfer fees (Bedrock cuenta egress)
+- Bedrock cobra todos los errores HTTP 500 (la API directa tiene 3% forgiveness buffer)
+- Mandatory CloudWatch / CloudTrail logging
+
+**Microsoft Foundry para Claude:** precio per-token idéntico al directo. **Trampa documentada**: los créditos Azure / Founders Hub / MACC **NO se aplican** a Claude en Foundry — se factura como Marketplace de terceros directo a tarjeta de crédito. ([AZ365.ai marzo 2026](https://az365.ai/blog/claude-on-azure-the-marketplace-billing-trap/), [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/5851352)). Caso documentado: una startup acumuló ~$13.000 USD en un mes pensando que sus credits de Foundry cubrían Claude. No lo hicieron.
+
+### Descuentos EA / MACC
+
+- **Azure EA solo:** 15–25% negociado. ([Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing))
+- **Azure EA + MACC:** 23–28%. (misma fuente)
+- **Anthropic Enterprise / volume discounts:** disponibles, negociados directamente.
+- **OpenAI Enterprise tier:** custom pricing, negociado.
+
+### El cálculo neto para una decisión informada
+
+| Escenario | Costo directo | Costo Azure | Costo Bedrock | Neto vs directo |
+|-----------|---------------|--------------|----------------|------------------|
+| GPT-5.4, sin compliance, sin descuento | 100 | 115–140 | n/a | **+15% a +40%** |
+| GPT-5.4, EA solo (-20%) | 100 | 92–112 | n/a | **-8% a +12%** |
+| GPT-5.4, EA + MACC (-25%) | 100 | 86–105 | n/a | **-14% a +5%** |
+| Claude Sonnet, sin compliance | 100 | n/a (Foundry sin desc.) | 120–135 | **+20% a +35% Bedrock** |
+| DeepSeek vs Azure (sin compliance) | 100 | 120–135 | n/a | **+20% a +35%** |
+| DeepSeek vs Azure (con GDPR EU) | inviable | 120–135 | n/a | **prima de compliance** |
+
+**Conclusión accionable**: el descuento EA/MACC típicamente **compensa pero no supera** el overhead Azure. La factura final queda entre -14% y +12% vs el vendor directo. La decisión real **no se gana con el descuento, se gana o se pierde por compliance y mandato corporativo**.
+
+### Cuándo el hyperscaler sí vale la pena
+
+1. **GDPR / data residency obligatorio**: la prima compra compliance que el directo no ofrece. Esencial con datos de clientes EU.
+2. **Mandato corporativo "todo en Azure/AWS"**: el overhead se asume como costo de gobernanza unificada.
+3. **Modelo geopolíticamente sensible**: el caso DeepSeek vía Azure. Acceso directo a DeepSeek no es viable cuando hay GDPR (datos rutean por servidores chinos). Azure resuelve compliance europeo aún con +20–35% markup — y aun así DeepSeek vía Azure sigue siendo ~15x más barato que Sonnet para tareas masivas. ([DeployBase](https://deploybase.ai/articles/deepseek-v3-pricing))
+4. **MACC burn**: si la organización ya comprometió gasto anual con Microsoft, consumir Foundry/Azure OpenAI lo aplica contra ese compromiso (excepto Claude en Foundry — ver trampa arriba).
+
+**Si ninguno de esos cuatro aplica**, vendor directo gana en precio neto y en velocidad de features — las betas y nuevas capacidades salen primero en la API del fabricante.
+
+### Input para negociación con vendors
+
+Datos verificados que conviene tener encima de la mesa para acuerdos en curso:
+
+| Dato | Valor | Fuente | Uso en negociación |
+|------|-------|--------|---------------------|
+| Azure overhead vs OpenAI directo | 15–40% (avg 22%) | TokenMix, Inference.net, CloudZero | "Necesitamos descuento que cubra al menos 25% para break-even" |
+| Bedrock overhead vs Anthropic directo | 20–35% efectivo | TokenMix Bedrock | "Foundry o directo nos da el mismo precio sin ese markup" |
+| Foundry Claude credits exclusion | Documentado | Microsoft Q&A, AZ365.ai | "Aclaración explícita en el contrato sobre qué credits aplican" |
+| Anthropic Enterprise volume discount | Disponible | CloudZero, Anthropic sales | "Solicitar términos comparables a los del hyperscaler con MACC" |
+| OpenAI Enterprise custom pricing | Disponible | Finout, OpenAI | "Solicitar mismo régimen que Azure pero sin overhead" |
+
+---
+
 ## Nivel 0 — Configuraciones inmediatas (5 minutos, sin código)
 
 **Auto Mode en Copilot** — Cambiar el selector de modelo a "Auto" en VSCode. Copilot elige el modelo más eficiente por tarea. 10% de descuento automático en el multiplicador del modelo.
@@ -73,9 +188,9 @@ La diferencia entre Haiku y Opus es **25x en precio**. La mayoría de los workfl
 
 **Batch API** — 50% de descuento en input y output, calidad idéntica. Combinado con prompt caching: hasta **95% de ahorro**. Ideal para clasificación masiva, generación de tests, análisis nocturnos.
 
-**DeepSeek via Azure** — ~$0.19/MTok input via Azure — **~15x más barato que Sonnet**. La API directa de DeepSeek no es viable para Visma (datos rutean por servidores chinos). Azure resuelve el compliance europeo con un markup de 20–35%.
+**DeepSeek via Azure** — ~$0.19/MTok input via Azure — **~15x más barato que Sonnet**. La API directa de DeepSeek no es viable con datos EU (rutean por servidores chinos). Azure resuelve el compliance europeo con un markup de 20–35% sobre directo — pagás compliance, no descuento, y aun así es 15x más barato que Sonnet.
 
-**Negociación EA Microsoft** — Rango documentado: 15–25% con EA solo, **23–28% con EA + Azure MACC**. No es un precio publicado — es negociado.
+**Negociación EA Microsoft** — Rango documentado: 15–25% con EA solo, **23–28% con EA + Azure MACC**. No es un precio publicado — es negociado. Importante: como se ve en la sección de procurement, este descuento típicamente compensa pero no supera el overhead Azure. La decisión gana o pierde por compliance, no por descuento.
 
 ---
 
@@ -116,7 +231,7 @@ El mercado de inference APIs en 2026 tiene 11+ providers. Los precios varían **
 ## Resumen de métricas clave
 
 | Palanca | Ahorro / Impacto | Complejidad |
-|---------|-----------------|-------------|
+|---------|------------------|-------------|
 | Copilot Auto Mode | 10% descuento | ⭐ Inmediata |
 | compressOutput + tool search | hasta 20% tokens | ⭐ Inmediata |
 | Agent Debug Log + Chat Debug View | Visibilidad inmediata sin setup | ⭐ Inmediata |
