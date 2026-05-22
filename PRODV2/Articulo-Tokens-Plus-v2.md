@@ -1,6 +1,6 @@
 # Tokens, factura, y una conversación que se nos venía
 
-El 1 de junio GitHub Copilot cambia su modelo de cobro. En Visma es el vendor de IA más adoptado, así que para muchas BUs del grupo este es el primer mes en el que la pregunta "¿cuánto consumimos en tokens?" deja de ser teórica. Un artículo para entender el cambio, el impacto, las estrategias para optimizar consumo, y cómo monitorearlo en serio.
+El 1 de junio GitHub Copilot cambia su modelo de cobro. En Visma es el vendor de IA más adoptado, así que para muchas BUs del grupo este es el primer mes en el que la pregunta "¿cuánto consumimos en tokens?" deja de ser teórica. Un artículo para entender el cambio, el impacto, las estrategias para optimizar consumo, y cómo monitorearlo en serio —empezando por vos mismo.
 
 ---
 
@@ -16,7 +16,7 @@ Ese período se termina. Y se termina de la peor manera posible: con el cambio d
 
 Visto así, **este evento es la excusa correcta para una conversación que ya nos debíamos.** El 1 de junio no inventa el problema, lo hace visible. Y mientras el problema fue invisible, nadie tenía razones para construir la capacidad. Ahora sí.
 
-Este artículo es para empezar a construir ese hábito en el grupo. Va a hablar del impacto concreto que tiene el cambio de Copilot. Va a traer tips y estrategias prácticas para reducir consumo y costo, aplicables tanto si usás Copilot como si usás Cursor o Claude. Va a mostrar cómo distintas BUs pueden empezar a monitorear consumo de forma real, no por adivinación. Y va a poner sobre la mesa una distinción conceptual que cambia cómo se piensa todo lo demás: **caja negra vs API Key.**
+Este artículo es para empezar a construir ese hábito en el grupo. Va a hablar del impacto concreto que tiene el cambio de Copilot. Va a traer tips y estrategias prácticas para reducir consumo y costo, aplicables tanto si usás Copilot como si usás Cursor o Claude. Va a poner sobre la mesa una distinción conceptual que cambia cómo se piensa todo lo demás: **caja negra vs API Key.** Y, sobre todo, va a mostrar **cómo cada uno se puede medir a sí mismo** — porque la gobernanza individual es la base de toda gobernanza colectiva.
 
 Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que el grupo pone en IA esté trabajando, no calentando aire.
 
@@ -53,7 +53,7 @@ Cuando una BU "usa IA", está eligiendo entre dos formas muy distintas de consum
 | **Quién elige el modelo** | La herramienta (con o sin tu input) | Tu código |
 | **Prompt caching** | Lo aplica la herramienta si quiere | Lo activás vos |
 | **Batch API** | No disponible | Disponible, 50% off |
-| **Observabilidad por persona** | Lo que ofrezca el dashboard del vendor | Lo que vos midas (OpenTelemetry, etc.) |
+| **Observabilidad por persona** | Depende — Claude Code, Claude Cowork (Team/Ent) y Copilot Chat ya exponen OpenTelemetry; Cursor todavía no | OpenTelemetry propio, control total |
 | **Stopper de costo** | Depende del plan y de los settings del admin | Usage limits en la consola del proveedor |
 | **Time-to-value** | Bajo (descargás y andás) | Alto (hay que construir) |
 | **Donde se controla el costo** | Eligiendo plan y settings | En cada llamada |
@@ -139,17 +139,97 @@ La segunda, de gobernanza: **el stopper no es una solución, es una alarma de in
 
 ---
 
-## Visibilidad por persona: OpenTelemetry y la otra ventaja de la API
+## Gobernanza personal: cómo te medís vos mismo
 
-Esto vuelve al concepto de caja negra vs API Key, porque acá la diferencia es enorme.
+Acá llega la parte concreta del artículo. Porque toda esta conversación sobre factura, BUs y grupos arranca en algo mucho más chico: **cada persona que usa IA todos los días puede —y debería— ver su propio consumo.** No el del equipo. No el de la BU. El propio.
 
-Cuando una BU consume Claude o cualquier LLM por API directa, puede instrumentar las llamadas con **OpenTelemetry**. Cada request lleva metadata: qué persona la disparó, qué feature, qué endpoint, qué modelo, cuántos tokens de input y output, cuántos cache hits. Esa info va a un backend de observabilidad (Datadog, Grafana, Honeycomb, lo que la BU ya use) y de ahí salen dashboards reales: consumo por dev, por feature, por equipo. Por hora, por día, por mes.
+Si vos no sabés cuántas sesiones abriste esta semana, cuánto contexto repetido mandaste, qué modelos disparaste, cuántos tokens de input contra tokens de output —que cuestan 4-6x más—, entonces no estás haciendo gobernanza, estás adivinando. Y la buena noticia es que **medirse a uno mismo en 2026 lleva diez minutos de setup y cero euros**, si usás las herramientas correctas.
 
-Con eso, la pregunta "¿quién está moviendo la aguja este mes?" tiene respuesta concreta. No hay misterio. La conversación deja de ser "subió la factura de IA" y pasa a ser "subió el consumo de la feature X de la BU Y, y es porque el endpoint Z no tiene caching activado". Eso es accionable. Lo otro es ruido.
+Vamos por partes.
 
-La caja negra no te deja hacer esto. Copilot tiene un dashboard de uso a nivel organización, pero la granularidad por persona y por feature es la que GitHub elige darte, no la que vos necesitás. Cursor lo mismo. Claude Desktop tiene logging local de sesiones pero no es agregable a nivel grupo. Si una BU del grupo tiene un caso de uso de IA en producción y no instrumentó con OpenTelemetry desde el día uno, está volando a ciegas.
+### Lo que tenés que actualizar primero: caja negra ya no significa "ciego"
 
-Esto no significa que toda BU tiene que migrar todo a API. Significa que **para los casos donde la observabilidad importa, la API es el camino, y OpenTelemetry es la herramienta**. Anthropic y OpenAI ya publican specs OTel para sus SDKs. No es trabajo de meses, es trabajo de un sprint.
+Antes de la sección técnica, una corrección importante a algo que se dice mucho. Caja negra **no significa más** que no se puede instrumentar. Eso era cierto hace 12-18 meses. Hoy, varias de las herramientas que técnicamente son cajas negras —porque pagás por plan, no por token— exponen OpenTelemetry de fábrica. Lo que cambia es **quién instrumenta**: vos en lugar del vendor.
+
+Herramientas que **sí** exponen OpenTelemetry hoy:
+
+- **Claude Code:** soporte oficial. Activás una variable de entorno y empieza a exportar métricas y eventos a cualquier backend OTLP.
+- **Claude Cowork (Claude Desktop)** en planes Team y Enterprise, desde la versión 1.1.4173 en adelante. Stream de eventos con prompts, invocaciones de tools y MCP, latencias.
+- **GitHub Copilot Chat:** settings nativos en VSCode (`github.copilot.chat.otel.enabled`). Exporta traces, métricas y eventos de cada llamada LLM, tool execution y sesión de agente.
+- **Codex CLI (OpenAI):** exporta logs estructurados y métricas OTel.
+
+La que **todavía no** lo expone de forma nativa: **Cursor**. Tiene Admin Dashboard con API propia y exports CSV en planes Enterprise, pero no OTel out-of-the-box. Si te urge, hay hooks de comunidad (cursor-otel-hook, CursorLens como proxy) que cierran el gap.
+
+**La regla actualizada:** antes de adoptar o profundizar en una herramienta de IA, preguntá si expone OTel. Si lo hace, podés tener observabilidad de grado enterprise sin necesidad de migrar nada a API directa. Si no lo hace, sabés que tu visibilidad va a depender del dashboard del vendor.
+
+### Tu dashboard personal de Claude Code en diez minutos
+
+Si usás Claude Code (que es el caso mejor documentado y el que más data exporta), esto es lo que vas a hacer.
+
+Claude Code emite seis tipos de métricas por OpenTelemetry. Los nombres son textuales, no inventados:
+
+- `claude_code_token_usage` — input, output, **cache creation** y **cache reads** desglosados. Esta es la métrica que te dice cuánto contexto estás repitiendo: si tus `cache_read` son altos relativo a tus `input` frescos, vas bien. Si no, estás pagando precio completo por cosas que ya enviaste.
+- `claude_code_cost_usage` — costo en USD por API call.
+- `claude_code_session_count` — número de sesiones que abriste.
+- `claude_code_active_time_total` — tiempo activo de Claude Code.
+- `claude_code_lines_of_code_count` — líneas agregadas y removidas.
+- `claude_code_code_edit_tool_decision` — accept/reject de sugerencias, desglosado por lenguaje.
+
+Para activarlo, abrís tu `~/.zshrc` o `~/.bashrc` y agregás estas variables:
+
+```bash
+export CLAUDE_CODE_ENABLE_TELEMETRY=1
+export OTEL_METRICS_EXPORTER=otlp
+export OTEL_LOGS_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+```
+
+Eso solo no te da dashboard, te da el grifo abierto. Te falta el backend. Para uso personal hay dos caminos limpios:
+
+**Camino A — Grafana Cloud (sin instalar nada en tu máquina, free tier).** Te abrís cuenta gratis, te dan un endpoint OTLP, lo ponés en `OTEL_EXPORTER_OTLP_ENDPOINT`, y ya estás mandando métricas a un Grafana que vive en la nube. Mirás tu dashboard desde el browser. Cero infraestructura local.
+
+**Camino B — Aspire Dashboard local (un solo container Docker).** Si preferís que nada salga de tu máquina, levantás el container de Aspire Dashboard que Microsoft publica gratis. Te da un trace viewer con un endpoint OTLP built-in. Apuntás Claude Code ahí y listo. Sin cuenta cloud, sin enviar nada afuera.
+
+Las dos opciones están documentadas y son de tres comandos cada una. No hace falta IT, no hace falta budget, no hace falta una reunión con tu tech lead. Es algo que armás vos un martes a la tarde.
+
+Una vez que el dashboard está vivo, las preguntas que podés contestar son exactamente las que importan para gobernanza personal:
+
+- **¿Cuántas sesiones abrí esta semana?** `claude_code_session_count` agrupado por día.
+- **¿Cuánto estoy reenviando de contexto repetido?** Ratio entre `cache_read` y `input` fresco. Cuanto más alto el cache_read, mejor —significa que tu prompt caching está funcionando.
+- **¿Qué modelos estoy usando, en qué proporción?** Las métricas vienen con label de modelo. Si veis que 80% de tus llamadas son a Opus y solo 20% a Sonnet, ahí tenés un ahorro inmediato.
+- **¿Cuántos tokens input vs output?** El output cuesta 4-6x más. Ver la proporción te dice si tus pedidos están sesgados a generación pesada (reescribir archivos enteros, resúmenes largos) o a interacciones más livianas.
+- **¿Cuánto me cuesta cada día?** `claude_code_cost_usage` por día. Si tenés un día atípico, mirá qué pasó. Si tu costo por línea de código cambia mes a mes, sabés si estás mejorando o empeorando.
+
+### Tu dashboard personal de Copilot Chat
+
+Casi idéntico, con otros nombres. En VSCode, abrís `settings.json` y agregás:
+
+```json
+{
+  "github.copilot.chat.otel.enabled": true,
+  "github.copilot.chat.otel.exporterType": "file",
+  "github.copilot.chat.otel.outfile": "/tmp/copilot-otel.jsonl"
+}
+```
+
+Esto te exporta a un archivo local (lo más simple, sin cloud). Si querés enviarlo a un backend, cambiás `exporterType` a `otlp` y agregás `otlpEndpoint`. Copilot Chat exporta traces (`invoke_agent`, `chat`, `execute_tool`, `execute_hook`), métricas de tokens y costos, y eventos de cada llamada LLM. La misma idea: lo conectás a Grafana Cloud o Aspire Dashboard y tenés tu dashboard.
+
+Nota: el OTel monitoring viene **off por default** en Copilot Chat. Hay que activarlo. Está bien que sea así porque te da control de qué se exporta y a dónde.
+
+### Cuando no es para vos, es para tu app
+
+Toda la sección de arriba es para vos usando IA como dev. **Cuando una BU del grupo construye una feature de producto que llama LLMs por debajo**, ahí ya no hay vendor que te exporte: tenés que instrumentar el código tuyo. Es ahí donde la API directa con OTel propio es el único camino.
+
+La buena noticia es que Anthropic, OpenAI y los providers grandes ya publican specs de OTel siguiendo las **GenAI Semantic Conventions**, así que no tenés que inventar nombres: usás los mismos atributos que ves en los dashboards de Claude Code o Copilot Chat. Una feature con cinco endpoints LLM, bien instrumentada, te da: consumo por endpoint, por modelo, por usuario final, por feature de producto. Eso es lo que después convierte una conversación de "subió la factura" en "subió la feature X porque el endpoint Z no tiene caching".
+
+### Por qué importa que cada uno se mida
+
+Esto no es un ejercicio de FinOps. Es algo más directo: **si vos no podés ver tu propio consumo, no podés mejorarlo.** Es la misma lógica de un atleta con su tracker, o de un dev con su profiler. No medirse no es neutral, es ceguera.
+
+Y para el grupo Visma, la gobernanza colectiva no se construye desde arriba pidiendo reportes a las BUs. Se construye desde abajo, con cada persona que entiende su propio uso y ajusta. El tech lead que tiene un dashboard del equipo se basa en datos que existen porque la gente del equipo se midió primero. La BU que reporta consumo razonable a finance lo hace porque los devs midieron antes. Sin el primer paso, lo demás es teatro de presupuesto.
+
+Diez minutos de setup. Cero euros de costo. Las preguntas de gobernanza personal contestadas para siempre. Si lo único que sacás de este artículo es armarte tu propio dashboard, ya valió la pena.
 
 ---
 
@@ -173,7 +253,7 @@ Tres niveles. Cualquier BU del grupo puede arrancar por el primero esta misma se
 
 **Cero esfuerzo (el lunes a la mañana).** Activar Auto Mode en Copilot. Activar `chat.tools.compressOutput.enabled` en VSCode. Activar tool search en VSCode. En Cursor, asegurarse de estar en Auto. En Claude Code, revisar que el `CLAUDE.md` no tenga 500 líneas. Configurar spending limits en cada herramienta donde se consume. Esto es el piso. Ahorro estimado combinado: 15-25% sin tocar workflows.
 
-**Esfuerzo medio (un sprint).** Si una BU tiene una app o feature que llama a una API de modelo, activar prompt caching. Migrar workflows asíncronos (reportes, clasificaciones nocturnas, embeddings, evaluación de prompts en CI) a Batch API: **50% de descuento sin diferencia de calidad**, combinable con caching para **hasta 95% de ahorro**. Instrumentar las llamadas con OpenTelemetry. Ahorro estimado: 60-90% en el costo de esa app específica.
+**Esfuerzo medio (un sprint).** Cada dev se arma su dashboard personal de OpenTelemetry (Claude Code o Copilot Chat, según qué use más). Si una BU tiene una app o feature que llama a una API de modelo, activar prompt caching. Migrar workflows asíncronos (reportes, clasificaciones nocturnas, embeddings, evaluación de prompts en CI) a Batch API: **50% de descuento sin diferencia de calidad**, combinable con caching para **hasta 95% de ahorro**. Instrumentar las llamadas con OpenTelemetry siguiendo GenAI Semantic Conventions. Ahorro estimado: 60-90% en el costo de esa app específica.
 
 **Esfuerzo grande (un trimestre, decisión de arquitectura).** Routing multi-modelo: clasificación a Haiku, código y razonamiento estándar a Sonnet, decisiones complejas a Opus, batch y experimentos a DeepSeek directo (donde no haya tema de datos sensibles) o vía Azure (donde sí). RouteLLM o LiteLLM o Portkey como gateway. **Ahorro reportado: 20-80% del OpEx**, dependiendo del mix actual. Esto no es para todas las BUs, pero para las que ya tienen carga seria de IA en producción es la palanca grande.
 
@@ -181,30 +261,32 @@ Tres niveles. Cualquier BU del grupo puede arrancar por el primero esta misma se
 
 ## Lo que no te puede arreglar ningún proveedor
 
-Estas tres cosas dependen de cada empresa del grupo. Las pongo en orden de impacto.
+Estas tres cosas dependen de cada empresa del grupo, y de cada persona dentro de ella. Las pongo en orden de impacto.
 
 **Decidir qué tarea va a qué modelo.** Si todo va al modelo más caro, todo cuesta como el más caro. La factura no la fija el proveedor, la fija el routing. Es decisión de arquitectura, no de herramienta.
 
 **Cortar contexto.** El 62% de basura en la factura no se va con un setting. Se va decidiendo qué información mandar y qué no, qué historia comprimir, cuándo abrir una sesión nueva en vez de seguir la del lunes. Context engineering reduce costos **entre 60% y 80%**. Es una habilidad, no un click.
 
-**Mirar la factura.** Suena trivial y es el más importante. Mirar la propia, mirar la de la BU, mirar la del grupo, mirar la trayectoria mensual. **IDC proyecta que las Global 1000 están subestimando sus costos de AI en un 30% hacia 2027.** Eso es exactamente lo que pasa cuando nadie mira. Si no hay alguien con la pregunta "¿qué la está moviendo este mes?", la respuesta siempre va a ser "más uso de IA", y eso no es accionable.
+**Mirar la factura — empezando por la propia.** Suena trivial y es el más importante. Mirar la propia, mirar la del equipo, mirar la de la BU, mirar la del grupo, mirar la trayectoria mensual. **IDC proyecta que las Global 1000 están subestimando sus costos de AI en un 30% hacia 2027.** Eso es exactamente lo que pasa cuando nadie mira. Si no hay alguien con la pregunta "¿qué la está moviendo este mes?", la respuesta siempre va a ser "más uso de IA", y eso no es accionable.
 
 ---
 
 ## Qué hacer esta semana, por rol
 
-**Si sos developer.** Lunes: Auto Mode, compressOutput, tool search. Miércoles: mirá una sesión larga tuya y observá cuánto contexto está arrastrando. Viernes: si tu equipo tiene una feature con API propia, abrí el ticket para activar caching.
+**Si sos developer.** Lunes: Auto Mode, compressOutput, tool search. Martes a la tarde: armate tu dashboard personal de OpenTelemetry. Diez minutos, cero euros, te va a cambiar la vista. Miércoles: con el dashboard ya andando, mirá una sesión larga tuya y observá cuánto contexto está arrastrando, qué modelos usaste, cuántos tokens fueron output. Viernes: si tu equipo tiene una feature con API propia, abrí el ticket para activar caching y para instrumentar las llamadas con OTel.
 
-**Si sos tech lead.** Lunes: chequeá que tu BU tiene spending limits configurados en todos los proveedores que usa. Miércoles: hacé una hora con el equipo para decidir cuáles casos siguen como caja negra y cuáles ameritan API. Viernes: si tenés algo en API sin OpenTelemetry, ponelo en el roadmap del próximo sprint.
+**Si sos tech lead.** Lunes: chequeá que tu BU tiene spending limits configurados en todos los proveedores que usa. Martes: contale al equipo cómo armarse el dashboard personal. La gobernanza colectiva empieza por la individual. Miércoles: hacé una hora con el equipo para decidir cuáles casos siguen como caja negra y cuáles ameritan API. Viernes: si tenés algo en API sin OpenTelemetry, ponelo en el roadmap del próximo sprint.
 
 **Si tomás decisiones de presupuesto en una BU.** Lunes: pedí el dashboard de uso de los últimos 90 días por herramienta. Miércoles: identificá quién es el responsable nombrado de mirar la trayectoria mensual. Si nadie, asignalo. Viernes: agendá la conversación con finance para mostrarle el cambio de junio antes de que ellos te lo pregunten en julio.
 
 **Si estás mirando el grupo desde arriba.** Esto le toca a alguien. La factura consolidada del grupo en IA va a cambiar de forma este año. Las BUs que vean el cambio venir van a salir bien paradas. Las que no, van a explicar en julio por qué la línea de AI tools subió 3x.
 
-**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja negra y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae el grupo.
+**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja negra y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae el grupo. Y empieza, literal, en cada dev que se arma su dashboard un martes a la tarde.
 
 ---
 
 ## Para profundizar
 
 Los datos, fuentes y multiplicadores citados en este artículo están en `data/verified-metrics.md` del repo, con URL a cada fuente original. La documentación técnica (`PROD/technical-docs-draft-v2.md`) tiene el detalle por capa, con ejemplos de código, casos de aplicación y de no-aplicación. El documento sobre el descuento del hyperscaler y el caso GDPR/DeepSeek está en `PRODV2/hyperscaler-discount-vs-gdpr-ES.md`.
+
+Para los detalles de OpenTelemetry en Claude Code, la documentación oficial está en `code.claude.com/docs/en/agent-sdk/observability`. Para Copilot Chat, en `code.visualstudio.com/docs/copilot/guides/monitoring-agents`. Para las GenAI Semantic Conventions estándar (usadas tanto por Anthropic como por OpenAI), en `opentelemetry.io/docs/specs/semconv/gen-ai/`.
