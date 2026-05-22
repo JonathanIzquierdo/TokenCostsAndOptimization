@@ -1,53 +1,48 @@
-# Si no cambiás nada, en junio pagás 3x
+# Tokens, factura, y una conversación que se nos venía
 
-Un artículo para el grupo Visma sobre el costo real del stack de IA: Copilot, Claude, Cursor, APIs propias. Lo que se viene, lo que se puede hacer ahora, y por qué importa quién está mirando la factura.
-
----
-
-## Executive Summary
-
-El 1 de junio cambia cómo se factura GitHub Copilot. No es un ajuste de precio: es un cambio de modelo, de plano a por consumo. La factura de IA del grupo —sumando Copilot, Cursor, Claude, APIs directas— sube aproximadamente 3x si no se mueve nada. La buena noticia es que casi todo lo que la hace subir es contexto repetido, llamadas que podrían ir a modelos baratos, descuentos del 90% sin activar y, sobre todo, una pregunta que pocas empresas del grupo se hicieron: **¿estamos consumiendo IA como caja negra o como API parametrizable?** La diferencia entre las dos no es técnica, es de control. Y de plata.
-
-Gastar bien, no gastar menos.
+El 1 de junio GitHub Copilot cambia su modelo de cobro. En Visma es el vendor de IA más adoptado, así que para muchas BUs del grupo este es el primer mes en el que la pregunta "¿cuánto consumimos en tokens?" deja de ser teórica. Un artículo para entender el cambio, el impacto, las estrategias para optimizar consumo, y cómo monitorearlo en serio.
 
 ---
 
-## Call to Action
+## Por qué este artículo, y por qué ahora
 
-Esto no es una lista para tech leads. Es una lista para cada empresa del grupo Visma.
+El 1 de junio GitHub Copilot deja de cobrarse plano y pasa a usage-based billing. Cada seat sigue costando lo mismo, pero ahora trae AI Credits incluidos: mientras estás dentro de esos créditos no se cobra extra; cuando se acaban, se paga por consumo. Es un cambio que afecta directo a Visma porque Copilot es probablemente el vendor de IA más adoptado del grupo: una porción grande de nuestro consumo de IA hoy pasa por ahí.
 
-- Si tu BU usa Copilot: activar Auto Mode y `chat.tools.compressOutput.enabled`. 5 minutos. Es el piso.
-- Si tu BU usa Cursor: revisar el plan y el modo Auto del routing interno. Cursor cobra parecido a Copilot bajo el nuevo esquema.
-- Si tu BU usa Claude (Desktop, Code, Cowork): configurar usage limits en la consola de Anthropic. No vienen puestos por default.
-- Si tu BU desarrolla features con LLM consumidos por API: activar prompt caching y evaluar Batch API para todo lo asíncrono.
-- Si tu BU todavía no decidió si consume IA como caja negra o por API: leer este artículo entero antes de firmar el próximo contrato anual.
-- Y a nivel grupo: alguien tiene que estar mirando la factura consolidada. Si nadie tiene esa pregunta en su rol, la respuesta de julio va a ser "más uso de IA".
+Ese es el disparador. Pero conviene decirlo desde el principio: **el resto del stack ya funcionaba así**. Cursor cobra por planes con cuota y overage desde hace meses. Claude (Desktop, Code, Cowork) lo mismo. Las APIs directas de Anthropic, OpenAI, Azure OpenAI, Bedrock —siempre fueron pay-per-token desde el día uno, nunca tuvieron flat fee. Lo único que cambia el 1 de junio es Copilot. Lo demás ya estaba.
+
+Y ahí está la cosa incómoda. La pregunta "¿cuánto nos cuesta cada token que consumimos?" debería haber estado dando vueltas en nuestras cabezas desde hace bastante. Si no estaba, fue porque el flat fee de Copilot nos tapaba la vista en la parte del stack donde más consumimos, y porque en el resto —Claude, Cursor, APIs— el consumo era todavía chico o estaba sumido dentro de presupuestos más grandes que nadie auditaba.
+
+Ese período se termina. Y se termina de la peor manera posible: con el cambio del vendor más usado, justo cuando nadie del grupo está particularmente entrenado en pensar consumo de tokens como una capacidad del usuario. Porque eso es lo que es. **Usar IA bien no es solo prompt engineering, es saber consumir menos tokens para obtener el mismo resultado.** Y esa capacidad, igual que el FinOps de cloud hace 10 años, se construye con hábito, no con una herramienta mágica.
+
+Este artículo es para empezar a construir ese hábito en el grupo. Va a hablar del impacto concreto que tiene el cambio de Copilot. Va a traer tips y estrategias prácticas para reducir consumo y costo, aplicables tanto si usás Copilot como si usás Cursor o Claude. Va a mostrar cómo distintas BUs pueden empezar a monitorear consumo de forma real, no por adivinación. Y va a poner sobre la mesa una distinción conceptual que cambia cómo se piensa todo lo demás: **caja negra vs API Key.**
+
+Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que el grupo pone en IA esté trabajando, no calentando aire.
 
 ---
 
-## La factura del grupo, no de tu seat
+## Lo que está pasando con el dinero (y nadie lo está mirando)
 
-Hay un dato que da vueltas. En 30 equipos relevados entre marzo y mayo de 2026, **el 62% de la factura de IA no es por trabajo del modelo**. Es por mandar el mismo contexto, una y otra vez. De cada 100 dólares que el grupo pone en IA, 62 son literalmente el mismo system prompt, la misma documentación de proyecto, el mismo historial, viajando ida y vuelta.
+Antes de hablar de qué hacer, vale mostrar dónde está el problema.
 
-Lo más concreto: una sesión típica empieza en 5.000 tokens y para el turno 50 está en 200.000. Nadie lo ve. No hay un cartel que diga "estás a 40x del costo de cuando empezaste". La factura llega a fin de mes y se atribuye a "más uso de IA".
+En 30 equipos relevados entre marzo y mayo de 2026, **el 62% de la factura de IA no es por trabajo del modelo**. Es por mandar el mismo contexto, una y otra vez. De cada 100 euros que una empresa pone en IA, 62 son literalmente el mismo system prompt, la misma documentación de proyecto, el mismo historial, viajando ida y vuelta hasta el modelo. Es como si un courier te cobrara cada vez que mueve una caja y vos lo hicieras pasar 50 veces por la misma esquina porque te olvidaste de pedirle que la dejara en el destino.
 
-Hasta ahora a Visma no le pegaba directo porque pagábamos planos. Copilot Business: $19/seat/mes. Copilot Enterprise: $39/seat/mes. Fijo, predecible, una línea en el presupuesto. Cursor lo mismo, planes con cuota. Claude Desktop lo mismo, planes con cuota. El 1 de junio se termina para Copilot, y la industria entera va detrás. Los workflows agénticos intensivos —que es donde vamos— se están midiendo en torno a 3.5x el flat fee anterior. Y no se distribuye parejo: el top 10-15% de usuarios concentra el 60-70% del gasto.
+Lo concreto: una sesión típica empieza en 5.000 tokens. Para el turno 50 está en 200.000. Nadie lo ve. No hay un cartel que diga "estás a 40x del costo de cuando empezaste". La factura llega a fin de mes y se atribuye a "más uso de IA".
 
-Esto importa para cada empresa del grupo, no para "el equipo que más usa IA". La factura es de Visma. Si una BU resuelve esto bien y otra no, las dos pagan el promedio.
+Hasta ahora esto no nos pegaba directo porque en Copilot pagábamos plano —Copilot Business $19/seat, Enterprise $39/seat— y en el resto de las herramientas el consumo todavía no era el suficiente como para que alguien levantara la mano. Eso cambia. Los workflows agénticos intensivos, que es donde la industria va, se están midiendo en torno a **3.5x el flat fee anterior**. Y no se distribuye parejo: el **top 10-15% de usuarios concentra el 60-70% del gasto**. Si tu BU tiene devs que usan IA todo el día —y son los que la usan bien y producen más—, son ellos los que mueven la aguja para todos los demás.
+
+Esto importa para cada empresa del grupo, no para "el equipo que más usa IA". La factura es de Visma como grupo, y los presupuestos individuales de cada BU son el lugar donde el cambio se va a sentir. Si una BU resuelve esto bien y otra no, el grupo paga el promedio.
 
 ---
 
 ## El concepto que cambia todo: caja negra vs API Key
 
-Antes de seguir, una pausa conceptual que vale para gente de todos los niveles técnicos del grupo.
+Antes de seguir con tips concretos, una pausa conceptual que vale para gente de todos los niveles técnicos del grupo. Es la distinción más importante del artículo.
 
-Cuando una BU "usa IA", en realidad está eligiendo entre dos formas muy distintas de consumirla. Importa para la factura, para la gobernanza y para qué optimizaciones están disponibles. Lo más importante: **mucha gente no sabe en cuál de las dos está parada.**
+Cuando una BU "usa IA", está eligiendo entre dos formas muy distintas de consumirla. Importa para la factura, para la gobernanza y para qué optimizaciones están disponibles. Lo más importante: **mucha gente no sabe en cuál de las dos está parada.**
 
 **Caja negra:** una herramienta empaquetada que por adentro llama a un modelo. Copilot, Cursor, Claude Desktop, Claude Code, ChatGPT Enterprise. Vos no ves el prompt que se manda. No ves cuánto contexto carga la herramienta antes de tu pregunta. No ves qué modelo elige para qué tarea (salvo que te lo deje configurar). Pagás un plan, consumís, te llega la factura. La herramienta hace optimizaciones por vos (Copilot ya cachea, Cursor también, Claude Code también) pero las decisiones grandes están afuera de tu alcance.
 
 **API Key:** consumir el modelo directo del proveedor (Anthropic, OpenAI, DeepSeek, Google) o de un hyperscaler (Azure, AWS Bedrock, Google Vertex), con una clave y código propio. Vos armás el prompt, vos decidís qué contexto va, vos elegís el modelo, vos activás caching, vos medís. El costo es por token consumido, sin plan flat.
-
-La tabla:
 
 | Aspecto | Caja negra | API Key |
 |---|---|---|
@@ -65,17 +60,17 @@ No hay opción "mejor". Para un dev individual escribiendo código, la caja negr
 
 Lo importante para cada empresa del grupo es esto: **decidir caja negra vs API por defecto, sin pensarlo, es la decisión más cara que se está tomando hoy.** Si una BU está corriendo en producción una feature que llama a un LLM 10.000 veces por día a través de una caja negra cuando podría hacerlo con API + caching, está pagando 5-10x sin razón. Y al revés, si una BU está consumiendo IA conversacional para tareas de dev exploratorias vía API artesanal cuando podría usar Copilot o Cursor, está pagando con tiempo del equipo lo que el flat fee cubre.
 
-La regla simple: **caja negra para uso humano, API para uso programático.** Cualquier cosa que se ejecute sin un humano esperando del otro lado, debería ir por API.
+La regla simple: **caja negra para uso humano, API para uso programático.** Cualquier cosa que se ejecute sin un humano esperando del otro lado debería ir por API.
 
 ---
 
-## "Pero en mi BU no usamos Copilot"
+## Las objeciones que ya escuché tres veces esta semana
 
-Liderar esta conversación dentro de Visma me dejó una colección de respuestas que vale la pena visitar. Algunas son específicas de Copilot, otras valen para todo el stack.
+Liderar esta conversación dentro de Visma me dejó una colección de respuestas. Vale la pena visitarlas, porque las preguntas son las mismas en todas las BUs.
 
-### "Yo uso Cursor / Claude Code, esto no me toca"
+### "Yo uso Cursor o Claude Code, esto no me toca"
 
-Te toca igual. Cursor y Claude Code están bajo el mismo régimen de planes con cuota + overage, y la presión sobre los precios sube en toda la industria a la vez. Cursor recientemente migró a un esquema de "requests includes" similar al de Copilot, y Anthropic ajustó sus límites de los planes de Claude varias veces en los últimos meses. Lo que cambia en junio en Copilot es el evento más visible, pero no es una excepción —es la tendencia.
+Te toca igual, aunque por una razón distinta. El 1 de junio no cambia ni Cursor ni Claude —esos ya estaban en planes con cuota y overage desde antes. Lo que cambia es que **antes nadie miraba el consumo en ninguna parte del stack**, porque Copilot era flat y el resto era todavía chico. Ahora que la línea más gorda del presupuesto (Copilot) pasa a usage-based, las BUs van a empezar a mirar todo. Y cuando empiecen a mirar Cursor o Claude se van a encontrar exactamente los mismos vicios: sesiones eternas, contexto repetido, modelos caros para tareas chiquitas.
 
 Lo concreto para vos: las técnicas que mueven la aguja son las mismas. Mantené sesiones cortas, abrí una nueva cuando la conversación cambió de tema, sacá lo que el modelo no necesita ver, elegí el modelo más chico que sirva para la tarea. En Cursor eso se traduce en usar Auto mode y no forzar Claude Opus para todo. En Claude Code, en cuidar el `CLAUDE.md` y no dejar que el contexto crezca sin freno.
 
@@ -93,7 +88,7 @@ Eso es lo que pensaba yo también. Después miré.
 
 Una conversación normal de 20 turnos arrastra entre **5.000 y 10.000 tokens innecesarios** que se podrían haber dejado afuera. Eso es por conversación. Multiplicalo por la cantidad de conversaciones por día. Multiplicalo por el equipo. Multiplicalo por las empresas del grupo.
 
-Y un detalle técnico que se subestima: **el output cuesta 4-6x más que el input**. No es un detalle menor. Cuando le pedís a un modelo que te resuma todo lo que hablamos hasta acá, el resumen sale carísimo. Cuando le pedís que reescriba un archivo entero en vez de hacer un diff, también. La asimetría está en cada decisión.
+Y un detalle técnico que se subestima mucho: **el output cuesta 4-6x más que el input**. No es un detalle menor. Cuando le pedís a un modelo que te resuma todo lo que hablamos hasta acá, el resumen sale carísimo. Cuando le pedís que reescriba un archivo entero en vez de hacer un diff, también. La asimetría está en cada decisión.
 
 ### "Tengo extended thinking en `display: omitted`. No se ve, no cuenta"
 
@@ -150,7 +145,7 @@ Cuando una BU consume Claude o cualquier LLM por API directa, puede instrumentar
 
 Con eso, la pregunta "¿quién está moviendo la aguja este mes?" tiene respuesta concreta. No hay misterio. La conversación deja de ser "subió la factura de IA" y pasa a ser "subió el consumo de la feature X de la BU Y, y es porque el endpoint Z no tiene caching activado". Eso es accionable. Lo otro es ruido.
 
-La caja negra no te deja hacer esto. Copilot tiene un dashboard de uso a nivel organización, pero la granularidad por persona / por feature es la que GitHub elige darte, no la que vos necesitás. Cursor lo mismo. Claude Desktop tiene logging local de sesiones pero no es agregable a nivel grupo. Si una BU del grupo tiene un caso de uso de IA en producción y no instrumentó con OpenTelemetry desde el día 1, está volando a ciegas.
+La caja negra no te deja hacer esto. Copilot tiene un dashboard de uso a nivel organización, pero la granularidad por persona y por feature es la que GitHub elige darte, no la que vos necesitás. Cursor lo mismo. Claude Desktop tiene logging local de sesiones pero no es agregable a nivel grupo. Si una BU del grupo tiene un caso de uso de IA en producción y no instrumentó con OpenTelemetry desde el día uno, está volando a ciegas.
 
 Esto no significa que toda BU tiene que migrar todo a API. Significa que **para los casos donde la observabilidad importa, la API es el camino, y OpenTelemetry es la herramienta**. Anthropic y OpenAI ya publican specs OTel para sus SDKs. No es trabajo de meses, es trabajo de un sprint.
 
@@ -162,7 +157,7 @@ En los 2010s, cuando AWS recién maduraba, hubo un patrón que se repitió en mu
 
 Compute pasó de "compré un servidor, lo amortizo en 3 años" a "pago por hora-CPU mientras esté prendida". El mismo equipo, con los mismos workloads, podía gastar 5x más o 5x menos según si alguien apagaba la instancia el viernes.
 
-Tokens están en esa fase ahora. Pagábamos planos por seat, ahora pagamos por uso. La factura va a tener varianzas grandes según hábito, no según workload. Y como en el caso de AWS, la diferencia entre los que ven el cambio venir y los que lo ven después en el dashboard no es 10%, es múltiplos.
+Tokens están en esa fase ahora. Pagábamos planos por seat —al menos en el vendor más usado—, ahora pagamos por uso. La factura va a tener varianzas grandes según hábito, no según workload. Y como en el caso de AWS, la diferencia entre los que ven el cambio venir y los que lo ven después en el dashboard no es 10%, es múltiplos.
 
 La parte buena: ya sabemos cómo termina esta película. Las empresas que sobrevivieron a la transición de cloud no fueron las que volvieron a on-prem. Fueron las que aprendieron a tagear instancias, a apagar lo que no usaban, a elegir el tier correcto para cada workload, a instrumentar todo con métricas, a poner budgets y alertas. **Gastar bien, no gastar menos.**
 
@@ -200,13 +195,11 @@ Estas tres cosas dependen de cada empresa del grupo. Las pongo en orden de impac
 
 **Si sos tech lead.** Lunes: chequeá que tu BU tiene spending limits configurados en todos los proveedores que usa. Miércoles: hacé una hora con el equipo para decidir cuáles casos siguen como caja negra y cuáles ameritan API. Viernes: si tenés algo en API sin OpenTelemetry, ponelo en el roadmap del próximo sprint.
 
-**Si tomás decisiones de presupuesto en una BU.** Lunes: pedí el dashboard de uso de los últimos 90 días por herramienta. Miércoles: identificá quién es el responsable nombrado de mirar la trayectoria mensual. Si nadie, asignalo. Viernes: agendá la conversación con tu finance para mostrarle el cambio de junio antes de que ellos te lo pregunten en julio.
+**Si tomás decisiones de presupuesto en una BU.** Lunes: pedí el dashboard de uso de los últimos 90 días por herramienta. Miércoles: identificá quién es el responsable nombrado de mirar la trayectoria mensual. Si nadie, asignalo. Viernes: agendá la conversación con finance para mostrarle el cambio de junio antes de que ellos te lo pregunten en julio.
 
 **Si estás mirando el grupo desde arriba.** Esto le toca a alguien. La factura consolidada del grupo en IA va a cambiar de forma este año. Las BUs que vean el cambio venir van a salir bien paradas. Las que no, van a explicar en julio por qué la línea de AI tools subió 3x.
 
-**Gastar bien, no gastar menos.** La factura ya está cambiando. La diferencia entre verla cambiar en junio y entender por qué cambia es leer este artículo dos veces, configurar tres settings, y tener una conversación de 15 minutos con tu tech lead.
-
-Mejor estar del lado que entendió.
+**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja negra y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae el grupo.
 
 ---
 
