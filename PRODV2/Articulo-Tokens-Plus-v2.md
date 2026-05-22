@@ -143,6 +143,8 @@ La segunda, de gobernanza: **el stopper no es una solución, es una alarma de in
 
 Acá llega la parte concreta del artículo. Porque toda esta conversación sobre factura, BUs y grupos arranca en algo mucho más chico: **cada persona que usa IA todos los días puede —y debería— ver su propio consumo.** No el del equipo. No el de la BU. El propio.
 
+No te estoy proponiendo esto como obligación ni como única forma. Te lo propongo como **la forma más rápida de empezar a entender lo que consumís**.
+
 Si vos no sabés cuántas sesiones abriste esta semana, cuánto contexto repetido mandaste, qué modelos disparaste, cuántos tokens de input contra tokens de output —que cuestan 4-6x más—, entonces no estás haciendo gobernanza, estás adivinando. Y la buena noticia es que **medirse a uno mismo en 2026 lleva diez minutos de setup y cero euros**, si usás las herramientas correctas.
 
 Vamos por partes.
@@ -271,6 +273,22 @@ Estas tres cosas dependen de cada empresa del grupo, y de cada persona dentro de
 
 ---
 
+## No es una receta. Es un momento.
+
+Quiero ser claro en algo antes de los pasos accionables: nada de lo que escribí acá es "la forma" de trabajar con IA. No estoy diciendo que todos tengan que tener un dashboard de Grafana, ni que todos tengan que migrar features a API directa, ni que todos tengan que hacer routing multi-modelo el viernes. Lo que digo es otra cosa.
+
+**Esta es la forma de entender. Y entender, hoy, es lo que hay que hacer.**
+
+Tuvimos un par de años muy generosos. Aparecieron herramientas nuevas todos los meses, los modelos eran cada vez mejores, los precios bajaban, y los planos flat nos dejaban experimentar sin pensar dos veces. Si activaste extended thinking "por las dudas", si abriste 40 sesiones esta semana, si dejaste un agente corriendo todo el fin de semana —el costo de aprender de eso fue bajo. Llegaba la factura plana, todos seguíamos.
+
+Ese período se está terminando. No de golpe, no para todos, no el 1 de junio. Pero se está terminando. Y la ventana para aprender barato —para experimentar, medir, equivocarse, ajustar, sin que duela— **es exactamente ahora**.
+
+Los que aprovechen esta ventana van a salir del otro lado entendiendo cómo se gobierna el consumo de IA. Van a saber qué setting mueve qué número. Van a tener intuición. Van a ser los que en seis meses, cuando esto sea política de empresa en todas las BUs del grupo, ya tengan la respuesta. **Los que la dejen pasar van a tener que aprender lo mismo, pero con la factura corriendo y menos margen para experimentar.** Es la misma curva, distinto contexto emocional.
+
+Por eso este artículo. No para decirte qué hacer, sino para mostrarte por dónde se empieza a aprender, y para que sepas que el momento de hacerlo es este. Convertirse en buenos en esto —los mejores, incluso— no es magia, es atravesar una curva de aprendizaje. La curva está. El timing también. Lo único que falta es decidir entrar.
+
+---
+
 ## Qué hacer esta semana, por rol
 
 **Si sos developer.** Lunes: Auto Mode, compressOutput, tool search. Martes a la tarde: armate tu dashboard personal de OpenTelemetry. Diez minutos, cero euros, te va a cambiar la vista. Miércoles: con el dashboard ya andando, mirá una sesión larga tuya y observá cuánto contexto está arrastrando, qué modelos usaste, cuántos tokens fueron output. Viernes: si tu equipo tiene una feature con API propia, abrí el ticket para activar caching y para instrumentar las llamadas con OTel.
@@ -281,7 +299,7 @@ Estas tres cosas dependen de cada empresa del grupo, y de cada persona dentro de
 
 **Si estás mirando el grupo desde arriba.** Esto le toca a alguien. La factura consolidada del grupo en IA va a cambiar de forma este año. Las BUs que vean el cambio venir van a salir bien paradas. Las que no, van a explicar en julio por qué la línea de AI tools subió 3x.
 
-**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja negra y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae el grupo. Y empieza, literal, en cada dev que se arma su dashboard un martes a la tarde.
+**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja negra y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae el grupo. Y empieza, literal, en cada dev que se arma su dashboard un martes a la tarde. No para hacer todo distinto. Para entender lo que ya está haciendo. Esa es la curva que vale la pena atravesar ahora, mientras todavía sale barata.
 
 ---
 
