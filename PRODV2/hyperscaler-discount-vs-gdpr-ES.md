@@ -6,7 +6,7 @@
 
 ---
 
-## Resumen ejecutivo (90 segundos)
+## Resumen ejecutivo
 
 La idea de comprar Claude o GPT a través de Azure/AWS para "aprovechar el descuento del 25% del Enterprise Agreement" parece evidente sobre el papel y casi siempre falla en la realidad. La razón es simple: el descuento del EA aplica sobre el precio nominal del token, y el precio nominal del token es **idéntico** en el vendor directo y en el hyperscaler para los mismos modelos. El hyperscaler agrega un **15–40% de overhead** (support plans, egress, hosting de modelos fine-tuned, VNet, monitoring), que típicamente neutraliza o supera el descuento negociado. La factura neta después de aplicar descuento al precio inflado queda en una franja de **-14% a +12% vs vendor directo**, no en el -25% que sugiere el marketing.
 
