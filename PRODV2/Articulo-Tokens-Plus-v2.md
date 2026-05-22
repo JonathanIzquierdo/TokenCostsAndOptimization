@@ -14,6 +14,8 @@ Y ahí está la cosa incómoda. La pregunta "¿cuánto nos cuesta cada token que
 
 Ese período se termina. Y se termina de la peor manera posible: con el cambio del vendor más usado, justo cuando nadie del grupo está particularmente entrenado en pensar consumo de tokens como una capacidad del usuario. Porque eso es lo que es. **Usar IA bien no es solo prompt engineering, es saber consumir menos tokens para obtener el mismo resultado.** Y esa capacidad, igual que el FinOps de cloud hace 10 años, se construye con hábito, no con una herramienta mágica.
 
+Visto así, **este evento es la excusa correcta para una conversación que ya nos debíamos.** El 1 de junio no inventa el problema, lo hace visible. Y mientras el problema fue invisible, nadie tenía razones para construir la capacidad. Ahora sí.
+
 Este artículo es para empezar a construir ese hábito en el grupo. Va a hablar del impacto concreto que tiene el cambio de Copilot. Va a traer tips y estrategias prácticas para reducir consumo y costo, aplicables tanto si usás Copilot como si usás Cursor o Claude. Va a mostrar cómo distintas BUs pueden empezar a monitorear consumo de forma real, no por adivinación. Y va a poner sobre la mesa una distinción conceptual que cambia cómo se piensa todo lo demás: **caja negra vs API Key.**
 
 Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que el grupo pone en IA esté trabajando, no calentando aire.
