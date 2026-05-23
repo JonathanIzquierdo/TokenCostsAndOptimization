@@ -18,7 +18,7 @@ Visto así, **este evento es la excusa correcta para una conversación que ya no
 
 Este artículo es para empezar a construir ese hábito en Visma. Va a hablar del impacto concreto que tiene el cambio de Copilot. Va a traer tips y estrategias prácticas para reducir consumo y costo, aplicables tanto si usás Copilot como si usás Cursor o Claude. Va a poner sobre la mesa una distinción conceptual que cambia cómo se piensa todo lo demás: **en qué punto del espectro entre caja negra y API estás parado.** Y, sobre todo, va a mostrar **cómo cada uno se puede medir a sí mismo** — porque la gobernanza individual es la base de toda gobernanza colectiva.
 
-Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que Visma pone en IA esté trabajando, no calentando aire.
+Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que cada empresa de Visma pone en IA esté trabajando, no calentando aire.
 
 ---
 
@@ -32,7 +32,11 @@ Lo concreto: una sesión típica empieza en 5.000 tokens. Para el turno 50 está
 
 Hasta ahora esto no nos pegaba directo porque en Copilot pagábamos plano —Copilot Business $19/seat, Enterprise $39/seat— y en el resto de las herramientas el consumo todavía no era el suficiente como para que alguien levantara la mano. Eso cambia. Los workflows agénticos intensivos, que es donde la industria va, se están midiendo en torno a **3.5x el flat fee anterior**. Y no se distribuye parejo: el **top 10-15% de usuarios concentra el 60-70% del gasto**. Si tu BU tiene devs que usan IA todo el día —y son los que la usan bien y producen más—, son ellos los que mueven la aguja para todos los demás.
 
-Esto importa para cada empresa de Visma, no para "el equipo que más usa IA". La factura es de Visma, y los presupuestos individuales de cada BU son el lugar donde el cambio se va a sentir. Si una BU resuelve esto bien y otra no, todos pagan el promedio.
+Esto importa de forma distinta según cómo esté cada empresa. Visma no es una sola empresa con una factura unificada de IA: es un grupo donde cada empresa tiene sus finanzas, su selección de tecnología y sus propios presupuestos. Lo que se comparte son comunidad, reglas, y —en algunos casos— acuerdos corporativos opcionales a los que las empresas pueden adherirse.
+
+Esos acuerdos son una palanca real. Hay acuerdos vigentes con vendors importantes de IA que permiten a las empresas adheridas acceder a pricing diferenciado: descuentos por volumen agregado que individualmente no alcanzarían, waivers de seat fees cuando el grupo cruza ciertos umbrales de compromiso anual, escalones de descuento sobre el consumo que aplican a todas las empresas que se suman. El consumo se trackea y se reinvoicea por empresa, pero **el volumen consolidado del grupo es lo que dispara los descuentos que cada empresa individual no podría conseguir sola**.
+
+Por eso este artículo importa para cada empresa por separado **y** para Visma como conjunto. Para cada empresa, porque su factura individual se va a mover el 1 de junio. Para Visma como conjunto, porque la capacidad de gobernar tokens —y el aprendizaje sobre cómo hacerlo— son algo que se puede compartir entre las empresas que decidan organizarse así.
 
 ---
 
@@ -117,7 +121,7 @@ Una llamada con 2.000 tokens de thinking y 500 de output cuesta **5x más** que 
 
 Lo tenemos. Es del **15-25%**, y con MACC sube a **23-28%**. Pero ese descuento aplica sobre el consumo Azure, no sobre la API directa. Y Azure sobre OpenAI directo tiene un **overhead de 15-40% en TCO**.
 
-Hagamos la cuenta. Descuento del 25% sobre un servicio que tiene 30% de overhead sobre la alternativa directa. El "descuento" desaparece. No es que el EA no sirva —sirve, pero no como ahorro automático. Sirve como compliance, data residency y consolidación de factura. Y eso, para una empresa europea con GDPR encima como Visma, **es exactamente lo que estamos comprando.** Pagamos hyperscaler por seguridad jurídica, no por precio.
+Hagamos la cuenta. Descuento del 25% sobre un servicio que tiene 30% de overhead sobre la alternativa directa. El "descuento" desaparece. No es que el EA no sirva —sirve, pero no como ahorro automático. Sirve como compliance, data residency y consolidación de factura. Y eso, para empresas europeas con GDPR encima como las de Visma, **es exactamente lo que estamos comprando.** Pagamos hyperscaler por seguridad jurídica, no por precio.
 
 El caso extremo es DeepSeek vía Azure: **+35% de markup** sobre el precio directo, pero el precio directo no es opción porque los servidores están en China. Acá el descuento del EA compra compliance, no ahorro. Está bien que así sea, **pero hay que llamarlo por su nombre.**
 
@@ -133,7 +137,7 @@ Esto ya está. No es futuro. La pregunta no es "¿llegarán modelos más baratos
 
 ## "Pero antes de cobrarme, ¿no me avisa? ¿No se bloquea solo?"
 
-Esta es la pregunta más importante del artículo, y la que más gente del grupo me hizo. La respuesta corta es: **depende. Y la mayoría de las veces, no se bloquea solo.**
+Esta es la pregunta más importante del artículo, y la que más gente me hizo. La respuesta corta es: **depende. Y la mayoría de las veces, no se bloquea solo.**
 
 Vale la pena explicarlo herramienta por herramienta, porque cada una funciona distinto. No es para que sigas una receta uniforme —cada BU de Visma tiene su mix de proveedores, sus planes, sus convenios con corporate. El objetivo de esta tabla es que sepas **dónde mirar** en cada caso para conocer tu propia situación:
 
@@ -264,7 +268,7 @@ Tokens están en esa fase ahora. Pagábamos planos por seat —al menos en el ve
 
 La parte buena: ya sabemos cómo termina esta película. Las empresas que sobrevivieron a la transición de cloud no fueron las que volvieron a on-prem. Fueron las que aprendieron a tagear instancias, a apagar lo que no usaban, a elegir el tier correcto para cada workload, a instrumentar todo con métricas, a poner budgets y alertas. **Gastar bien, no gastar menos.**
 
-Visma ya hizo esa transición en cloud. No hay que reinventar. Las prácticas son las mismas, el activo a vigilar es nuevo.
+Las empresas de Visma ya hicieron esa transición en cloud. No hay que reinventar. Las prácticas son las mismas, el activo a vigilar es nuevo.
 
 ---
 
@@ -316,9 +320,9 @@ Por eso este artículo. No para decirte qué hacer, sino para mostrarte por dón
 
 **Si tomás decisiones de presupuesto en una BU.** Lunes: pedí el dashboard de uso de los últimos 90 días por herramienta. Miércoles: identificá quién es el responsable nombrado de mirar la trayectoria mensual. Si nadie, asignalo. Viernes: agendá la conversación con finance para mostrarle el cambio de junio antes de que ellos te lo pregunten en julio.
 
-**Si estás mirando Visma desde arriba.** Esto le toca a alguien. La factura consolidada de Visma en IA va a cambiar de forma este año. Las BUs que vean el cambio venir van a salir bien paradas. Las que no, van a explicar en julio por qué la línea de AI tools subió 3x.
+**Si estás mirando Visma desde arriba.** Esto le toca a alguien. La factura agregada de las empresas de Visma en IA va a cambiar de forma este año. Las BUs que vean el cambio venir van a salir bien paradas. Las que no, van a explicar en julio por qué la línea de AI tools subió 3x.
 
-**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja gris y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La trae Visma. Y empieza, literal, en cada dev que se arma su dashboard un martes a la tarde. No para hacer todo distinto. Para entender lo que ya está haciendo. Esa es la curva que vale la pena atravesar ahora, mientras todavía sale barata.
+**Gastar bien, no gastar menos.** El cambio del 1 de junio es solo el evento que nos forzó a mirar. Lo que importa es la capacidad que se construye después: usuarios que entienden lo que consumen, equipos que monitorean lo que pagan, BUs que eligen entre caja gris y API con criterio. Esa capacidad no la trae Copilot, ni Cursor, ni Anthropic. La traen las empresas de Visma. Y empieza, literal, en cada dev que se arma su dashboard un martes a la tarde. No para hacer todo distinto. Para entender lo que ya está haciendo. Esa es la curva que vale la pena atravesar ahora, mientras todavía sale barata.
 
 ---
 
