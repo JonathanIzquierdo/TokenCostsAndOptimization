@@ -1,8 +1,8 @@
 # Guía Técnica Final: Optimización de Tokens en IA
-## De configuraciones básicas a arquitectura enterprise — con narrativa para todos los niveles técnicos
+## De configuraciones básicas a arquitectura enterprise, con narrativa para todos los niveles técnicos
 
 **Audiencia:** Desarrolladores, tech leads, architects, líderes técnicos, decisores de presupuesto, y también personas con menos background técnico que quieran entender qué implementar y por qué.
-**Prerequisito:** Familiaridad básica con LLMs y APIs de IA. No hace falta ser experto en cada herramienta — cada sección incluye contexto suficiente para seguir.
+**Prerequisito:** Familiaridad básica con LLMs y APIs de IA. No hace falta ser experto en cada herramienta. Cada sección incluye contexto suficiente para seguir.
 
 ---
 
@@ -14,9 +14,9 @@ A diferencia de una documentación técnica clásica que asume contexto previo, 
 
 La estructura sigue una progresión de impacto creciente:
 
-- **Niveles 0–1** son ajustes que cualquier developer puede aplicar hoy mismo en su IDE o en código de aplicación. Ahorros típicos del 20–40%.
-- **Niveles 2–3** son decisiones de arquitectura: cómo asignás modelos por tarea y cómo ruteás automáticamente. Ahorros del 50–80%.
-- **Niveles 4–6** son capa enterprise: gobernanza, observabilidad cross-equipo, proveedores alternativos. Aquí se construye el control para que el costo no se desborde a medida que escala el uso.
+- **Niveles 0 y 1** son ajustes que cualquier developer puede aplicar hoy mismo en su IDE o en código de aplicación. Ahorros típicos del 20 a 40%.
+- **Niveles 2 y 3** son decisiones de arquitectura: cómo asignás modelos por tarea y cómo ruteás automáticamente. Ahorros del 50 a 80%.
+- **Niveles 4 a 6** son capa enterprise: gobernanza, observabilidad cross-equipo, proveedores alternativos. Aquí se construye el control para que el costo no se desborde a medida que escala el uso.
 
 Cada bloque de código está etiquetado con la **capa** en la que vive (de la 1 a la 4) y **quién lo toca** dentro del equipo, para que no haya ambigüedad sobre dónde se implementa.
 
@@ -25,13 +25,13 @@ Cada bloque de código está etiquetado con la **capa** en la que vive (de la 1 
 1. [Fundamentos](#1-fundamentos)
 2. [Dónde vive cada palanca de optimización](#2-donde-vive)
 3. [Vendor directo vs hyperscaler: la decisión de procurement](#3-procurement)
-4. [Nivel 0 — Configuraciones inmediatas](#4-nivel-0)
-5. [Nivel 1 — Arquitectura de contexto](#5-nivel-1)
-6. [Nivel 2 — Selección de modelos](#6-nivel-2)
-7. [Nivel 3 — Model routing automático](#7-nivel-3)
-8. [Nivel 4 — Infraestructura de costo y gobernanza](#8-nivel-4)
-9. [Nivel 5 — Observabilidad con OpenTelemetry y gobernanza personal](#9-otel)
-10. [Nivel 6 — Proveedores alternativos de menor costo](#10-alternativas)
+4. [Nivel 0: configuraciones inmediatas](#4-nivel-0)
+5. [Nivel 1: arquitectura de contexto](#5-nivel-1)
+6. [Nivel 2: selección de modelos](#6-nivel-2)
+7. [Nivel 3: model routing automático](#7-nivel-3)
+8. [Nivel 4: infraestructura de costo y gobernanza](#8-nivel-4)
+9. [Nivel 5: observabilidad con OpenTelemetry y gobernanza personal](#9-otel)
+10. [Nivel 6: proveedores alternativos de menor costo](#10-alternativas)
 11. [Referencia de métricas verificadas](#11-metricas)
 
 ---
@@ -59,11 +59,11 @@ Antes de optimizar conviene entender exactamente qué se está pagando. La factu
 
 Toda llamada a un LLM se factura en tres bloques principales que conviene distinguir desde el inicio:
 
-- **Input tokens** — Todo lo que el modelo recibe para procesar: system prompt (instrucciones generales del asistente), historial de la conversación, definiciones de herramientas (tools), documentos adjuntos y el mensaje del usuario. Es la parte "barata" del precio, pero también la que crece sin control si no se gobierna.
-- **Output tokens** — Lo que el modelo genera: la respuesta visible al usuario, el razonamiento interno (extended thinking) y las tool calls. **Cuestan típicamente 5x más que los input tokens.** Esto significa que limitar la longitud de la respuesta tiene un impacto desproporcionado en la factura.
-- **Cache reads** — Cuando reutilizás un prompt o un bloque grande de contexto vía prompt caching, las lecturas de cache se cobran al **10% del precio normal de input**. Es el descuento más grande que ofrece la plataforma, y la palanca individual con mayor impacto en aplicaciones que reutilizan contexto (RAG, agentes, asistentes con base de conocimiento).
+- **Input tokens.** Todo lo que el modelo recibe para procesar: system prompt (instrucciones generales del asistente), historial de la conversación, definiciones de herramientas (tools), documentos adjuntos y el mensaje del usuario. Es la parte "barata" del precio, pero también la que crece sin control si no se gobierna.
+- **Output tokens.** Lo que el modelo genera: la respuesta visible al usuario, el razonamiento interno (extended thinking) y las tool calls. **Cuestan típicamente 5x más que los input tokens.** Esto significa que limitar la longitud de la respuesta tiene un impacto desproporcionado en la factura.
+- **Cache reads.** Cuando reutilizás un prompt o un bloque grande de contexto vía prompt caching, las lecturas de cache se cobran al **10% del precio normal de input**. Es el descuento más grande que ofrece la plataforma, y la palanca individual con mayor impacto en aplicaciones que reutilizan contexto (RAG, agentes, asistentes con base de conocimiento).
 
-La asimetría 1x input / 5x output / 0.1x cache es la regla mental más útil para diseñar prompts: vale la pena pagar más en input estructurado y cacheable, a cambio de minimizar output libre.
+La asimetría 1x input, 5x output, 0.1x cache es la regla mental más útil para diseñar prompts: vale la pena pagar más en input estructurado y cacheable, a cambio de minimizar output libre.
 
 ### 1.2 Precios de referencia 2026
 
@@ -74,19 +74,19 @@ Esta tabla resume los precios públicos de los principales modelos a mayo 2026, 
 | Claude Haiku 4.5 | $1.00 | $5.00 | $0.10 | $1.25 |
 | Claude Sonnet 4.6 | $3.00 | $15.00 | $0.30 | $3.75 |
 | Claude Opus 4.7 | $5.00 | $25.00 | $0.50 | $6.25 |
-| GPT-5.4 | $2.50 | $15.00 | $0.25 | — |
-| GPT-5.5 (flagship) | $5.00 | $30.00 | $0.50 | — |
-| GPT-5 Nano | $0.05 | $0.40 | — | — |
-| DeepSeek V4-Flash (directo) | $0.14 | $0.28 | — | — |
-| DeepSeek V4-Flash (via Azure) | ~$0.19 | ~$0.38 | — | — |
-| Llama 4 via Groq | ~$0.11 | ~$0.34 | — | — |
+| GPT-5.4 | $2.50 | $15.00 | $0.25 | n/a |
+| GPT-5.5 (flagship) | $5.00 | $30.00 | $0.50 | n/a |
+| GPT-5 Nano | $0.05 | $0.40 | n/a | n/a |
+| DeepSeek V4-Flash (directo) | $0.14 | $0.28 | n/a | n/a |
+| DeepSeek V4-Flash (via Azure) | ~$0.19 | ~$0.38 | n/a | n/a |
+| Llama 4 via Groq | ~$0.11 | ~$0.34 | n/a | n/a |
 
 Fuentes: [Anthropic oficial mayo 2026](https://platform.claude.com/docs/en/about-claude/pricing), [OpenAI oficial](https://openai.com/api/pricing/), [Finout 2026](https://www.finout.io/blog/openai-pricing-in-2026), [DeployBase](https://deploybase.ai/articles/deepseek-v3-pricing), [ToolHalla](https://toolhalla.ai/blog/groq-vs-together-vs-fireworks-2026)
 
 Lo primero que salta a la vista es que **hay una diferencia de hasta 100x entre el modelo más barato (GPT-5 Nano a $0.05) y el más caro (GPT-5.5 a $5)** solo en input. Esa asimetría es la base de toda la estrategia de "asignación de modelo por tarea" que se desarrolla en el Nivel 2: tareas simples (clasificación, extracción, navegación de archivos) no necesitan el modelo flagship, y el ahorro es inmediato.
 
 > **Nota Opus 4.7:** El nuevo tokenizer de Opus 4.7 genera **hasta 35% más tokens para el mismo input** comparado con Opus 4.6. El precio por token no cambió, pero el costo efectivo por request puede ser hasta 35% mayor. Si tu equipo está evaluando migrar de Opus 4.6 a 4.7, conviene benchmarkear con tus propios prompts antes de tomar la decisión: el incremento puede compensar la mejora en capacidad, o no.
-> Fuente: [Finout — Anthropic API Pricing 2026](https://www.finout.io/blog/anthropic-api-pricing)
+> Fuente: [Finout, Anthropic API Pricing 2026](https://www.finout.io/blog/anthropic-api-pricing)
 
 ### 1.3 El contexto acumulado: el problema invisible
 
@@ -114,14 +114,14 @@ Los modelos con "extended thinking" (Claude Opus, Sonnet, o5-style en OpenAI) ti
 > 🔧 **Capa 1** (código de app) · SDK Anthropic Python · Developers de aplicación que llaman directo a `api.anthropic.com/v1/messages`
 
 ```python
-# INCORRECTO — display: omitted NO reduce el costo
+# INCORRECTO: display: omitted NO reduce el costo
 response = client.messages.create(
     model="claude-opus-4-7",
     thinking={"type": "enabled", "budget_tokens": 5000, "display": "omitted"}
     # Los 5000 tokens se siguen facturando como output
 )
 
-# CORRECTO — limitar el budget con modo adaptativo
+# CORRECTO: limitar el budget con modo adaptativo
 response = client.messages.create(
     model="claude-opus-4-7",
     thinking={"type": "adaptive", "effort": "low"}
@@ -144,7 +144,7 @@ Fuente: [PECollective, 2026](https://pecollective.com/tools/anthropic-api-pricin
 
 ## 2. Dónde vive cada palanca de optimización <a id="2-donde-vive"></a>
 
-Esta es probablemente la sección más importante del documento, porque resuelve un problema que casi todos los equipos sufren al empezar: **buscar la palanca en el lugar equivocado**. Hay un patrón muy frecuente — un dev intenta optimizar desde un settings del IDE algo que solo se puede configurar en el código de la aplicación, o un líder pide "activar caching para todos" cuando los usuarios consumen IA a través de un producto cerrado donde no existe esa opción.
+Esta es probablemente la sección más importante del documento, porque resuelve un problema que casi todos los equipos sufren al empezar: **buscar la palanca en el lugar equivocado**. Hay un patrón muy frecuente: un dev intenta optimizar desde un settings del IDE algo que solo se puede configurar en el código de la aplicación, o un líder pide "activar caching para todos" cuando los usuarios consumen IA a través de un producto cerrado donde no existe esa opción.
 
 Para evitar esa confusión, conviene mapear con precisión los lugares físicos donde se toca optimización. Son cuatro, y cada uno tiene una audiencia distinta, sus propios parámetros y su propio techo de impacto.
 
@@ -155,29 +155,29 @@ Para evitar esa confusión, conviene mapear con precisión los lugares físicos 
 | **Capa 1** | Código de aplicación (Python/JS/etc) que llama directo a la API | Developers que construyen apps internas con LLM | Prompt caching, thinking budgets, max_tokens, modelo por tarea, batch API, output budgets, headers de beta | **Hasta 95% combinado** |
 | **Capa 2** | Settings de IDE (VSCode, Copilot, Claude Code, Cursor) | Cualquier dev individual o admin vía MDM | Auto Mode, compressOutput, tool search, debug panels, OTel local | **Hasta 30% combinado** |
 | **Capa 3** | Consola de billing / admin de plataforma | Lead técnico, admin del tenant | Modelos permitidos/bloqueados, presupuestos por workspace, alertas, audit logs | **Indirecto: gobernanza** |
-| **Capa 4** | Gateway / routing layer (LiteLLM, Portkey, OpenRouter, RouteLLM) | Plataforma / infra | Routing automático entre modelos, fallbacks, retries, presupuestos por equipo, guardrails | **20–80% según [IDC](https://www.infoworld.com/article/4164236/github-shifts-copilot-to-usage-based-billing)** |
+| **Capa 4** | Gateway / routing layer (LiteLLM, Portkey, OpenRouter, RouteLLM) | Plataforma / infra | Routing automático entre modelos, fallbacks, retries, presupuestos por equipo, guardrails | **20 a 80% según [IDC](https://www.infoworld.com/article/4164236/github-shifts-copilot-to-usage-based-billing)** |
 
 Cómo leer esta tabla: si tu equipo solo tiene developers usando productos cerrados (Copilot, Cursor), la mayor parte de tu ahorro va a venir de Capa 2 (configurar bien el IDE) y de gobernanza de licencias en Capa 3. Si tu equipo construye apps que llaman directo a la API, las palancas más fuertes están en Capa 1 (caching, batch, asignación de modelo), y eventualmente Capa 4 cuando hay varios servicios y necesitás centralizar gobierno.
 
-### 2.2 El espectro: caja negra opaca / caja gris configurable / API Key
+### 2.2 El espectro: productos cerrados, herramientas con configuración, API directa
 
 Antes de discutir las cuatro capas hay una distinción anterior, conceptual, que define a cuáles capas tenés acceso. Hace año y medio, el mundo de la IA se dividía claramente en dos: las herramientas (caja negra) y las APIs (transparentes). Hoy esa división binaria quedó obsoleta. Lo que tenemos es un **espectro de tres niveles**, y mucha gente sigue razonando con el modelo viejo, lo que produce expectativas equivocadas.
 
-**Caja negra opaca.** Productos consumer sin instrumentación pensada para el usuario. Ejemplos: ChatGPT versión consumer, Gemini versión consumer, Claude.ai en planes Free/Pro. Lo único que ves es el chat, la respuesta y alguna cuota mensual del plan. No tenés model picker, no hay telemetría exportable, no podés modificar parámetros. Techo realista de ahorro: cambiar de plan o cancelar.
+**Productos cerrados.** Productos consumer sin instrumentación pensada para el usuario. Ejemplos: ChatGPT versión consumer, Gemini versión consumer, Claude.ai en planes Free/Pro. Lo único que ves es el chat, la respuesta y alguna cuota mensual del plan. No tenés model picker, no hay telemetría exportable, no podés modificar parámetros. Techo realista de ahorro: cambiar de plan o cancelar.
 
-**Caja gris configurable.** Herramientas enterprise o IDEs con visibilidad, model picker, telemetría OpenTelemetry y settings ricos. Ejemplos: Copilot en VSCode/Visual Studio, Claude Code, Claude Cowork en planes Team/Enterprise. Tenés acceso a Capa 2 (settings del IDE) y a una parte de Capa 3 (consola del producto). El caching lo hace la herramienta por vos. Cursor está en este grupo pero todavía no expone OTel nativo — tiene Admin Dashboard con API propia y exports CSV en Enterprise, y hay hooks de comunidad (cursor-otel-hook, CursorLens) que cierran el gap. Techo realista de ahorro: ~30% sobre consumo no optimizado.
+**Herramientas con configuración.** Productos enterprise o IDEs con visibilidad, model picker, telemetría OpenTelemetry y settings ricos. Ejemplos: Copilot en VSCode/Visual Studio, Claude Code, Claude Cowork en planes Team/Enterprise. Tenés acceso a Capa 2 (settings del IDE) y a una parte de Capa 3 (consola del producto). El caching lo hace la herramienta por vos. Cursor está en este grupo pero todavía no expone OTel nativo, tiene Admin Dashboard con API propia y exports CSV en Enterprise, y hay hooks de comunidad (cursor-otel-hook, CursorLens) que cierran el gap. Techo realista de ahorro: ~30% sobre consumo no optimizado.
 
-**API Key.** Vos escribís el código que llama al modelo. Ejemplos: Anthropic API directa, OpenAI API, AWS Bedrock, Google Vertex, Azure OpenAI. Tenés acceso a las cuatro capas. Las palancas grandes (caching 90%, batch 50%, routing 20–80%) viven en Capa 1 y Capa 4. Techo realista de ahorro: más del 90%.
+**API directa.** Vos escribís el código que llama al modelo. Ejemplos: Anthropic API directa, OpenAI API, AWS Bedrock, Google Vertex, Azure OpenAI. Tenés acceso a las cuatro capas. Las palancas grandes (caching 90%, batch 50%, routing 20 a 80%) viven en Capa 1 y Capa 4. Techo realista de ahorro: más del 90%.
 
-**Una BU puede estar en los tres niveles simultáneamente.** Caja gris para que los devs usen Copilot, API para una feature de producto que llama LLM por debajo, y quizás algún equipo usando ChatGPT consumer informalmente. Eso no es problema — es la realidad. Lo que importa es saber **en qué nivel está cada caso de uso** y no asumir que todo lo que no es API directa es caja negra opaca.
+**Una BU puede estar en los tres niveles simultáneamente.** Herramientas con configuración para que los devs usen Copilot, API directa para una feature de producto que llama LLM por debajo, y quizás algún equipo usando ChatGPT consumer informalmente. Eso no es problema, es la realidad. Lo que importa es saber **en qué nivel está cada caso de uso** y no asumir que todo lo que no es API directa es un producto cerrado.
 
 La regla simple para diseñar nuevas implementaciones:
-- **Caja gris para uso humano** (un dev escribiendo código, alguien explorando ideas).
+- **Herramientas con configuración para uso humano** (un dev escribiendo código, alguien explorando ideas).
 - **API directa para uso programático** (una feature de producto que llama un modelo sin humano del otro lado).
 
-Las cajas negras opacas son problema sobre todo cuando se usan para casos que ameritan otra cosa: si un equipo está usando ChatGPT consumer para tareas que requieren observabilidad, gobernanza o repetibilidad, ahí hay algo para revisar.
+Los productos cerrados son problema sobre todo cuando se usan para casos que ameritan otra cosa: si un equipo está usando ChatGPT consumer para tareas que requieren observabilidad, gobernanza o repetibilidad, ahí hay algo para revisar.
 
-**Este documento asume que estás construyendo, o yendo hacia ahí.** Las capas que siguen dan por sentado que tu equipo escribe código de aplicación contra una API o está evaluando hacerlo. Si hoy estás 100% en caja negra opaca y querés bajar costos significativos, el paso anterior es subir al menos a caja gris o construir un wrapper interno con API key; recién a partir de ahí abren las palancas que valen la pena.
+**Este documento asume que estás construyendo, o yendo hacia ahí.** Las capas que siguen dan por sentado que tu equipo escribe código de aplicación contra una API o está evaluando hacerlo. Si hoy estás 100% en productos cerrados y querés bajar costos significativos, el paso anterior es subir al menos a una herramienta con configuración o construir un wrapper interno con API key. Recién a partir de ahí abren las palancas que valen la pena.
 
 ### 2.3 Cómo se conecta cada script con su capa
 
@@ -206,9 +206,9 @@ La causa raíz no es técnica, es organizacional: cuando la decisión de configu
 
 Hay dos formas de gobernarlo, y conviene elegirla **antes** de que el problema aparezca:
 
-**Opción A — Wrapper interno compartido.** Una librería interna que envuelve el SDK del proveedor y le aplica defaults sanos hardcodeados: `adaptive thinking effort=low`, modelo Haiku salvo override explícito, prompt caching activo por defecto, max_tokens según el tipo de tarea. Todos los servicios consumen el wrapper en lugar del SDK directo. La ventaja es que es una sola decisión, replicada en todos lados, y cada cambio futuro se propaga con bumps de versión. Es el camino más limpio para equipos chicos o medianos.
+**Opción A: wrapper interno compartido.** Una librería interna que envuelve el SDK del proveedor y le aplica defaults sanos hardcodeados: `adaptive thinking effort=low`, modelo Haiku salvo override explícito, prompt caching activo por defecto, max_tokens según el tipo de tarea. Todos los servicios consumen el wrapper en lugar del SDK directo. La ventaja es que es una sola decisión, replicada en todos lados, y cada cambio futuro se propaga con bumps de versión. Es el camino más limpio para equipos chicos o medianos.
 
-**Opción B — Gateway compartido (LiteLLM / Portkey).** En vez de envolver el SDK en código, las llamadas pasan por un gateway HTTP que aplica policy: "si nadie especificó thinking, forzar low", "si nadie especificó modelo, usar Haiku", "si el costo de un request supera $X, alertar y/o bloquear". El código de los servicios no cambia — el gateway intercepta y normaliza desde la red. Ventaja: funciona aunque cada servicio esté en un lenguaje distinto y se gobierne presupuestos por equipo de forma centralizada.
+**Opción B: gateway compartido (LiteLLM / Portkey).** En vez de envolver el SDK en código, las llamadas pasan por un gateway HTTP que aplica policy: "si nadie especificó thinking, forzar low", "si nadie especificó modelo, usar Haiku", "si el costo de un request supera $X, alertar y/o bloquear". El código de los servicios no cambia, el gateway intercepta y normaliza desde la red. Ventaja: funciona aunque cada servicio esté en un lenguaje distinto y se gobierne presupuestos por equipo de forma centralizada.
 
 Regla práctica: **para equipos hasta ~5 servicios, wrapper alcanza**. A partir de ahí, gateway empieza a justificarse porque permite control multi-equipo, multi-lenguaje, fallbacks automáticos y observabilidad unificada sin tocar el código de las aplicaciones.
 
@@ -255,36 +255,36 @@ Lo mismo pasa con OpenAI vs Azure OpenAI: pricing per-token idéntico, overhead 
 
 Acá es donde la conversación se vuelve concreta. Diferentes fuentes independientes han medido el costo total efectivo de consumir LLMs a través de hyperscalers, y los datos son consistentes.
 
-**Azure OpenAI vs OpenAI directo — 15–40% overhead efectivo, promedio +22%**
+**Azure OpenAI vs OpenAI directo: 15 a 40% overhead efectivo, promedio +22%**
 
 Tres fuentes independientes de 2026 coinciden en el rango:
 
 | Fuente | Rango documentado | Cita textual |
 |--------|---------------------|---------------|
-| [TokenMix mayo 2026](https://tokenmix.ai/blog/azure-openai-cost) | 15–40%, avg 22% | "Token pricing identical. Total cost runs 15-40% higher on Azure due to support plans, data transfer, storage, and network infrastructure." |
-| [Inference.net enero 2026](https://inference.net/content/azure-openai-pricing-explained/) | 15–40% | "Total cost runs 15-40% higher on Azure due to support plans, data transfer, storage, and network infrastructure." |
-| [CloudZero mayo 2026](https://www.cloudzero.com/blog/azure-openai-pricing/) | 20–40% | "Production deployments typically add 20-40% above listed token rates." |
+| [TokenMix mayo 2026](https://tokenmix.ai/blog/azure-openai-cost) | 15 a 40%, avg 22% | "Token pricing identical. Total cost runs 15-40% higher on Azure due to support plans, data transfer, storage, and network infrastructure." |
+| [Inference.net enero 2026](https://inference.net/content/azure-openai-pricing-explained/) | 15 a 40% | "Total cost runs 15-40% higher on Azure due to support plans, data transfer, storage, and network infrastructure." |
+| [CloudZero mayo 2026](https://www.cloudzero.com/blog/azure-openai-pricing/) | 20 a 40% | "Production deployments typically add 20-40% above listed token rates." |
 
 Los componentes del overhead de Azure son los siguientes, y conviene tenerlos identificados para poder pedir cuentas en una negociación:
 
-- **Support plans**: $100–$1.000+/mes. En producción enterprise, Standard support es de facto obligatorio, así que ese costo entra siempre.
+- **Support plans**: $100 a $1.000+/mes. En producción enterprise, Standard support es de facto obligatorio, así que ese costo entra siempre.
 - **Data egress**: los primeros 100GB outbound son gratuitos, después se paga $0.087/GB. En aplicaciones con tráfico considerable, esto se acumula rápido.
-- **Fine-tuned model hosting**: $1.70–$3/hora **aun sin uso** = entre $1.224 y $2.160/mes por modelo, simplemente por tenerlo desplegado. Si tenés varios fine-tuned models, multiplicar.
-- **VNet integration, Private Link, content filtering**: $200–$2.000/mes según configuración. Son costos que muchas empresas necesitan por compliance, pero que la pricing page del modelo no muestra.
+- **Fine-tuned model hosting**: $1.70 a $3/hora **aun sin uso**, es decir entre $1.224 y $2.160/mes por modelo, simplemente por tenerlo desplegado. Si tenés varios fine-tuned models, multiplicar.
+- **VNet integration, Private Link, content filtering**: $200 a $2.000/mes según configuración. Son costos que muchas empresas necesitan por compliance, pero que la pricing page del modelo no muestra.
 - **Log Analytics y monitoring infra**: variable, depende del volumen y la retención.
 
-**AWS Bedrock para Claude — 20–35% overhead efectivo**
+**AWS Bedrock para Claude: 20 a 35% overhead efectivo**
 
 Pricing nominal idéntico a Anthropic directo, pero según [TokenMix Bedrock 2026](https://tokenmix.ai/blog/aws-bedrock-pricing):
 - Regional endpoints: +10% (cifra oficial publicada por Anthropic).
 - Cross-region inference: +10% adicional cuando se rutea entre regiones.
-- Bedrock cuenta data transfer (egress) — la API directa no.
+- Bedrock cuenta data transfer (egress). La API directa no.
 - Bedrock factura **todos** los errores HTTP 500. La API directa tiene un buffer de tolerancia (forgiveness buffer) del 3% en errores del servidor que no se cobran.
 - CloudWatch y CloudTrail logging mandatorio, con su costo asociado.
 
-Cita textual: *"TokenMix.ai cost tracking shows enterprises running Claude on Bedrock pay an average of 20-35% more than those using Anthropic's direct API — and most do not realize it."*
+Cita textual: *"TokenMix.ai cost tracking shows enterprises running Claude on Bedrock pay an average of 20-35% more than those using Anthropic's direct API, and most do not realize it."*
 
-**Microsoft Foundry para Claude — pricing idéntico pero trampa documentada**
+**Microsoft Foundry para Claude: pricing idéntico pero trampa documentada**
 
 Este es probablemente el caso más sutil y más caro, porque a primera vista parece el mismo precio. Claude se factura en Foundry como **Marketplace de terceros**, no como recurso nativo de Azure. La implicación crítica está documentada por [Microsoft Q&A](https://learn.microsoft.com/en-us/answers/questions/5851352) y [AZ365.ai marzo 2026](https://az365.ai/blog/claude-on-azure-the-marketplace-billing-trap/):
 
@@ -306,8 +306,8 @@ Acá los datos verificados sobre qué descuentos efectivamente se logran en nego
 
 | Tipo de descuento | Rango documentado | Fuente |
 |--------------------|--------------------|---------|
-| Azure EA solo | 15–25% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
-| Azure EA + MACC | 23–28% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
+| Azure EA solo | 15 a 25% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
+| Azure EA + MACC | 23 a 28% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
 | Anthropic Enterprise / volume | Disponible, custom | [CloudZero](https://www.cloudzero.com/blog/claude-pricing/) |
 | OpenAI Enterprise tier | Custom pricing | [Finout, OpenAI](https://www.finout.io/blog/openai-pricing-in-2026) |
 | AWS Bedrock private offers | Disponible | Anthropic docs |
@@ -318,12 +318,12 @@ Esta es la tabla que conviene tener a mano cuando alguien pregunta "¿pero no no
 
 | Escenario | Costo directo | Costo Azure | Costo Bedrock | Neto vs directo |
 |-----------|----------------|---------------|----------------|-------------------|
-| GPT-5.4, sin compliance, sin descuento | 100 | 115–140 | n/a | **+15% a +40%** |
-| GPT-5.4, EA solo (-20%) sobre 115–140 | 100 | 92–112 | n/a | **-8% a +12%** |
-| GPT-5.4, EA + MACC (-25%) sobre 115–140 | 100 | 86–105 | n/a | **-14% a +5%** |
-| Claude Sonnet, sin compliance | 100 | n/a (Foundry sin desc.) | 120–135 | **+20% a +35%** |
-| DeepSeek vs Azure (sin compliance) | 100 | 120–135 | n/a | **+20% a +35%** |
-| DeepSeek vs Azure (con GDPR EU) | inviable | 120–135 | n/a | **prima de compliance** |
+| GPT-5.4, sin compliance, sin descuento | 100 | 115 a 140 | n/a | **+15% a +40%** |
+| GPT-5.4, EA solo (-20%) sobre 115 a 140 | 100 | 92 a 112 | n/a | **-8% a +12%** |
+| GPT-5.4, EA + MACC (-25%) sobre 115 a 140 | 100 | 86 a 105 | n/a | **-14% a +5%** |
+| Claude Sonnet, sin compliance | 100 | n/a (Foundry sin desc.) | 120 a 135 | **+20% a +35%** |
+| DeepSeek vs Azure (sin compliance) | 100 | 120 a 135 | n/a | **+20% a +35%** |
+| DeepSeek vs Azure (con GDPR EU) | inviable | 120 a 135 | n/a | **prima de compliance** |
 
 **Conclusión operativa:** el descuento EA/MACC típicamente compensa pero **no supera** el overhead. La factura final, después de descuentos, queda en una franja entre -14% y +12% comparado con vendor directo. Es decir: cuando hay descuento bueno, el hyperscaler puede ser ligeramente más barato; cuando el descuento es menor o el workload genera mucho overhead, sale más caro. La decisión real **se gana o se pierde por compliance y procurement, no por descuento de precio**.
 
@@ -333,12 +333,12 @@ A partir de los datos anteriores, esta matriz resume cuándo conviene cada camin
 
 | Criterio dominante | Camino recomendado |
 |---------------------|----------------------|
-| Modelo del propio vendor enterprise-maduro (Anthropic, OpenAI), sin mandato Azure-only | **Vendor directo** — features primero, mejor precio neto, soporte de fábrica |
-| Modelo geopolíticamente sensible (DeepSeek, Qwen, modelos chinos) | **Hyperscaler (Azure preferido)** — la prima compra compliance |
-| Mandato corporativo "todo en Azure/AWS" | **Hyperscaler** — asumir overhead 15–40% como costo de gobernanza |
-| Necesidad de MACC burn / facturación unificada Microsoft | **Hyperscaler** — decisión contable, **excluir Claude en Foundry** |
-| Modelo open-source self-hosted (Llama, Mistral) | **Hyperscaler con managed endpoint o self-host** — Bedrock/Vertex o GPUs propias |
-| Equipo en exploración, prototipos, POCs | **Vendor directo** — onboarding rápido, menos burocracia |
+| Modelo del propio vendor enterprise-maduro (Anthropic, OpenAI), sin mandato Azure-only | **Vendor directo**, features primero, mejor precio neto, soporte de fábrica |
+| Modelo geopolíticamente sensible (DeepSeek, Qwen, modelos chinos) | **Hyperscaler (Azure preferido)**, la prima compra compliance |
+| Mandato corporativo "todo en Azure/AWS" | **Hyperscaler**, asumir overhead 15 a 40% como costo de gobernanza |
+| Necesidad de MACC burn / facturación unificada Microsoft | **Hyperscaler**, decisión contable, **excluir Claude en Foundry** |
+| Modelo open-source self-hosted (Llama, Mistral) | **Hyperscaler con managed endpoint o self-host**, Bedrock/Vertex o GPUs propias |
+| Equipo en exploración, prototipos, POCs | **Vendor directo**, onboarding rápido, menos burocracia |
 | Compliance GDPR / data residency obligatorio | **Hyperscaler** o **Mistral** (única opción major europea directa) |
 
 ### 3.7 Input para negociación
@@ -347,16 +347,16 @@ Cuando vayas a sentarte con cualquier vendor (Microsoft, AWS, Google, OpenAI, An
 
 | Dato | Valor | Fuente | Uso en negociación |
 |------|-------|--------|---------------------|
-| Azure overhead vs OpenAI directo | 15–40% (avg 22%) | TokenMix, Inference.net, CloudZero | "Necesitamos descuento que cubra al menos 25% para break-even contra directo" |
-| Bedrock overhead vs Anthropic directo | 20–35% efectivo | TokenMix Bedrock | "Foundry o directo nos da el mismo precio sin ese markup" |
+| Azure overhead vs OpenAI directo | 15 a 40% (avg 22%) | TokenMix, Inference.net, CloudZero | "Necesitamos descuento que cubra al menos 25% para break-even contra directo" |
+| Bedrock overhead vs Anthropic directo | 20 a 35% efectivo | TokenMix Bedrock | "Foundry o directo nos da el mismo precio sin ese markup" |
 | Foundry Claude credits exclusion | Documentado | Microsoft Q&A, AZ365.ai | "Aclaración escrita explícita sobre qué credits aplican a Claude" |
 | Anthropic Enterprise volume discount | Disponible | CloudZero | "Solicitar términos comparables a hyperscaler con MACC" |
 | OpenAI Enterprise custom pricing | Disponible | Finout | "Solicitar mismo régimen que Azure pero sin overhead" |
-| Pricing parity Claude en hyperscalers | Confirmado | Anthropic docs | "El hyperscaler no nos da mejor precio nominal — solo procurement" |
+| Pricing parity Claude en hyperscalers | Confirmado | Anthropic docs | "El hyperscaler no nos da mejor precio nominal, solo procurement" |
 
 ---
 
-## 4. Nivel 0 — Configuraciones inmediatas <a id="4-nivel-0"></a>
+## 4. Nivel 0: configuraciones inmediatas <a id="4-nivel-0"></a>
 
 Este nivel reúne todas las optimizaciones que **cualquier developer puede activar hoy mismo sobre su propia instalación de VSCode/Copilot**, sin necesidad de pedir permisos, sin tocar código de aplicación y sin construir infraestructura nueva. Son los "quick wins" del documento: poco esfuerzo, impacto inmediato, baseline obligatorio antes de pasar a niveles más complejos.
 
@@ -374,7 +374,7 @@ Si nunca tocaste el `settings.json`, vas a ver un archivo con llaves `{}`. Las o
 
 Esta es la optimización más rápida que existe en Copilot: cambiar el selector de modelo a **"Auto"** en VSCode. En modo Auto, Copilot elige automáticamente el modelo apropiado para cada request, y la plataforma aplica un **10% de descuento automático** sobre el multiplicador. Sin perder calidad para tareas estándar, dado que Auto Mode rutea las tareas simples a modelos más baratos y reserva el flagship solo para las que lo justifican.
 
-**Cómo se activa:** en el panel de Copilot Chat, arriba del input box hay un selector con el nombre del modelo actual (típicamente "GPT-4" o "Claude Sonnet"). Click ahí → seleccionar "Auto". Listo.
+**Cómo se activa:** en el panel de Copilot Chat, arriba del input box hay un selector con el nombre del modelo actual (típicamente "GPT-4" o "Claude Sonnet"). Click ahí, seleccionar "Auto". Listo.
 
 **Cómo verificás que funciona:** después de activar Auto, en la barra inferior de Copilot Chat vas a ver indicado qué modelo eligió para cada respuesta. Si para preguntas simples ves modelos baratos (Haiku, GPT-5 Nano) y para preguntas complejas ves Sonnet u Opus, el routing está haciendo su trabajo.
 
@@ -390,13 +390,13 @@ VSCode 1.120 introdujo una opción de post-procesamiento del output de terminal 
 { "chat.tools.compressOutput.enabled": true }
 ```
 
-**Qué pasa cuando lo activás.** Es transparente para el flujo del agente — la lógica no cambia, simplemente se le ahorra tener que procesar (y pagar) tokens basura. El agente sigue ejecutando los mismos comandos, pero antes de devolverte la salida, VSCode la limpia.
+**Qué pasa cuando lo activás.** Es transparente para el flujo del agente, la lógica no cambia, simplemente se le ahorra tener que procesar (y pagar) tokens basura. El agente sigue ejecutando los mismos comandos, pero antes de devolverte la salida, VSCode la limpia.
 
 **Cuándo conviene.** Siempre. No tiene downside conocido. Activarlo es lo primero que cualquier dev debería hacer al instalar Copilot.
 
 **Cómo verificás.** Abrí el Agent Debug Log (Sección 4.4). Cuando un comando ejecuta algo voluminoso (un `pnpm install` por ejemplo), comparalo con y sin compressOutput activado: vas a ver outputs mucho más cortos enviados al modelo, y eso se traduce directo en menos tokens facturados.
 
-### 4.3 Tool search — MCPs diferidos
+### 4.3 Tool search: MCPs diferidos
 
 Cuando tenés varios MCPs configurados, cada llamada incluye las definiciones de todas las herramientas disponibles, aunque el modelo no las vaya a usar. Tool search rompe ese patrón: en lugar de mandar todas las definiciones de entrada, el modelo recibe solo un índice y busca las herramientas a demanda cuando las necesita.
 
@@ -414,15 +414,15 @@ Es default desde Anthropic Sonnet 4.5+. Para GPT en Copilot hay que activarlo ma
 
 Impacto medido: hasta **20% de ahorro en tokens por request**, dependiendo de cuántos MCPs tengas activos. Fuente: [Visual Studio Magazine, 2026](https://visualstudiomagazine.com/articles/2026/04/30/vs-code-curbs-token-use-ahead-of-copilots-controversial-usage-based-billing-switch.aspx)
 
-### 4.4 Agent Debug Log Panel — El trace completo dentro de VSCode
+### 4.4 Agent Debug Log Panel: el trace completo dentro de VSCode
 
-Esta es probablemente la herramienta más subutilizada del stack: la forma más directa de ver qué está pasando en una sesión de agente sin configurar ningún backend externo. Muestra tokens consumidos, tool calls ejecutadas, model turns, subagentes, errores y un **flow chart visual del agente** — todo renderizado directamente en el editor.
+Esta es probablemente la herramienta más subutilizada del stack: la forma más directa de ver qué está pasando en una sesión de agente sin configurar ningún backend externo. Muestra tokens consumidos, tool calls ejecutadas, model turns, subagentes, errores y un **flow chart visual del agente**, todo renderizado directamente en el editor.
 
 ¿Por qué importa para optimización de costos? Porque hasta que no medís, no podés optimizar. La mayoría de los devs no tienen idea de cuántos tokens consume cada sesión, ni cuántas tool calls se disparan en silencio, ni qué subagentes se generan en cascada. Este panel hace todo eso visible en tiempo real.
 
 **Cómo abrir el panel:**
-- Menú overflow `(...)` en el panel de Copilot Chat → **"Show Agent Debug Logs"**
-- O Command Palette (`Cmd/Ctrl+Shift+P`) → **"Developer: Open Agent Debug Logs"**
+- Menú overflow `(...)` en el panel de Copilot Chat, **"Show Agent Debug Logs"**
+- O Command Palette (`Cmd/Ctrl+Shift+P`), **"Developer: Open Agent Debug Logs"**
 
 **Requiere habilitar el setting:**
 
@@ -435,9 +435,9 @@ Sin este setting, el comando del menú no muestra nada.
 **Qué muestra por sesión:**
 - **Overview:** model turns totales, tool calls ejecutadas, total tokens consumidos, errores
 - **View Logs:** lista cronológica de todos los eventos con timestamps y detalles, filtrable por tipo
-- **Agent Flow Chart:** grafo visual del flujo de ejecución. Muestra cómo se relacionan model turns, tool calls y subagentes anidados. Es especialmente útil cuando un agente se "va por las ramas" — el grafo deja ver claramente dónde se desvió.
+- **Agent Flow Chart:** grafo visual del flujo de ejecución. Muestra cómo se relacionan model turns, tool calls y subagentes anidados. Es especialmente útil cuando un agente se "va por las ramas", el grafo deja ver claramente dónde se desvió.
 
-Fuente: [VSCode Docs — Debug Chat Interactions](https://code.visualstudio.com/docs/copilot/chat/chat-debug-view)
+Fuente: [VSCode Docs, Debug Chat Interactions](https://code.visualstudio.com/docs/copilot/chat/chat-debug-view)
 
 **Persistir sesiones pasadas en disco:**
 
@@ -447,7 +447,7 @@ Fuente: [VSCode Docs — Debug Chat Interactions](https://code.visualstudio.com/
 
 Con file logging activo, cualquier sesión queda registrada y se puede revisar después: tool calls, LLM requests, token usage, errores. Sirve para análisis postmortem cuando una sesión salió cara y querés entender por qué.
 
-Fuente: [dvlprlife.com — Quick Tips: Debug Copilot Agent Session Logs, mayo 2026](https://www.dvlprlife.com/2026/05/quick-tips-debug-copilot-agent-session-logs-in-vs-code/)
+Fuente: [dvlprlife.com, Quick Tips: Debug Copilot Agent Session Logs, mayo 2026](https://www.dvlprlife.com/2026/05/quick-tips-debug-copilot-agent-session-logs-in-vs-code/)
 
 **Export a OTLP JSON:** Cada sesión puede exportarse para compartir, archivar o ingestar en cualquier backend OTel (Jaeger, Grafana, Langfuse, etc.). Click en el ícono Export (download) en el toolbar del panel. Esto es el puente entre la observabilidad local (Capa 2) y la observabilidad centralizada (Capa 3, ver Sección 9).
 
@@ -460,21 +460,21 @@ Fuente: [dvlprlife.com — Quick Tips: Debug Copilot Agent Session Logs, mayo 20
 
 Es meta-debugging: el LLM analiza su propio comportamiento previo. Útil para encontrar patrones de derroche cuando no es obvio a simple vista.
 
-Fuente: [VSCode Docs — Troubleshoot AI in Visual Studio Code](https://code.visualstudio.com/docs/copilot/troubleshooting)
+Fuente: [VSCode Docs, Troubleshoot AI in Visual Studio Code](https://code.visualstudio.com/docs/copilot/troubleshooting)
 
-### 4.5 Chat Debug View — Inspección request a request
+### 4.5 Chat Debug View: inspección request a request
 
 Mientras Agent Debug Log da la vista agregada, el **Chat Debug View** muestra el detalle de cada request individual: system prompt completo enviado al modelo, user prompt, contexto incluido (archivos, snippets, historial), y respuesta del modelo. Es la vista "mecánica" del IDE, equivalente a abrir el inspector de red en un browser.
 
-Sirve sobre todo para auditar **qué se está mandando al modelo en cada turno** — a veces lo que se manda es mucho más de lo que el dev imaginaba (archivos enteros cuando alcanzaba con un fragmento, historial completo cuando se podía resumir).
+Sirve sobre todo para auditar **qué se está mandando al modelo en cada turno**. A veces lo que se manda es mucho más de lo que el dev imaginaba (archivos enteros cuando alcanzaba con un fragmento, historial completo cuando se podía resumir).
 
-**Cómo abrir:** Menú `(...)` → **"Show Chat Debug View"** o Command Palette → **"Developer: Show Chat Debug View"**
+**Cómo abrir:** Menú `(...)`, **"Show Chat Debug View"** o Command Palette, **"Developer: Show Chat Debug View"**
 
-Fuente: [Medium — GitHub Copilot Token Usage Explained, Simform Engineering, mayo 2026](https://medium.com/simform-engineering/github-copilot-token-usage-explained-with-practical-cost-control-03062b15ecb0)
+Fuente: [Medium, GitHub Copilot Token Usage Explained, Simform Engineering, mayo 2026](https://medium.com/simform-engineering/github-copilot-token-usage-explained-with-practical-cost-control-03062b15ecb0)
 
 ### 4.6 Token usage visibility para BYOK (VSCode 1.120)
 
-Antes de la versión 1.120 de VSCode, cuando un dev usaba su propia API key (BYOK — Bring Your Own Key), el indicador de uso de tokens en Copilot siempre mostraba 0%, lo cual generaba la falsa impresión de "consumo cero". La versión 1.120 corrige ese accounting: ahora el indicador refleja correctamente el uso real cuando se usa BYOK, con lo cual los devs pueden monitorear su propio costo aunque estén pagando directamente a Anthropic/OpenAI.
+Antes de la versión 1.120 de VSCode, cuando un dev usaba su propia API key (BYOK, Bring Your Own Key), el indicador de uso de tokens en Copilot siempre mostraba 0%, lo cual generaba la falsa impresión de "consumo cero". La versión 1.120 corrige ese accounting: ahora el indicador refleja correctamente el uso real cuando se usa BYOK, con lo cual los devs pueden monitorear su propio costo aunque estén pagando directamente a Anthropic/OpenAI.
 
 ### 4.7 Auditar MCPs activos
 
@@ -484,19 +484,19 @@ La aritmética típica: **10 MCPs × 500 tokens promedio por definición = 5.000
 
 **Acción:** hacer una pasada cada cierto tiempo (mensual idealmente) por los MCPs activos y desactivar los que el equipo no usa. Si un MCP solo se necesita para una tarea puntual, activarlo a demanda y desactivarlo después.
 
-**Dónde se administran los MCPs activos.** En VSCode, Command Palette → "MCP: Show Installed Servers". Vas a ver una lista con cada MCP y un toggle para activarlo/desactivarlo individualmente.
+**Dónde se administran los MCPs activos.** En VSCode, Command Palette, "MCP: Show Installed Servers". Vas a ver una lista con cada MCP y un toggle para activarlo/desactivarlo individualmente.
 
 ---
 
-## 5. Nivel 1 — Arquitectura de contexto <a id="5-nivel-1"></a>
+## 5. Nivel 1: arquitectura de contexto <a id="5-nivel-1"></a>
 
 Mientras el Nivel 0 era todo configuración sobre productos cerrados, el Nivel 1 entra en el territorio donde se gana de verdad: **el diseño del contexto que mandás al modelo en cada request**. Tres palancas, todas en Capa 1:
 
-1. **Prompt caching** — Pagar 10% por contenido repetido.
-2. **Gestión de historial** — No re-enviar 200K tokens cuando 10K alcanzan.
-3. **RAG y output budgets** — Mandar solo lo relevante y limitar la longitud de la respuesta.
+1. **Prompt caching.** Pagar 10% por contenido repetido.
+2. **Gestión de historial.** No re-enviar 200K tokens cuando 10K alcanzan.
+3. **RAG y output budgets.** Mandar solo lo relevante y limitar la longitud de la respuesta.
 
-### 5.1 Prompt caching — la palanca individual de mayor impacto
+### 5.1 Prompt caching: la palanca individual de mayor impacto
 
 Prompt caching es la palanca individual de mayor impacto en aplicaciones que reutilizan contexto. La idea es simple: si un bloque de contenido se repite entre llamadas (un system prompt largo, una base de conocimiento, una guía de estilo, los primeros N turnos de una sesión), se puede marcar para que el proveedor lo cachee y cobre solo el 10% del precio en las llamadas siguientes.
 
@@ -514,11 +514,11 @@ El costo se reparte así:
 
 El break-even es de **un solo hit**. Cualquier app con system prompt estable o RAG está dejando dinero en la mesa si no lo activa.
 
-#### Caching cuando usás caja gris (Claude Code, Copilot, Claude Cowork)
+#### Caching cuando usás herramientas con configuración (Claude Code, Copilot, Claude Cowork)
 
-Si usás herramientas como Claude Code, Claude Cowork o Copilot Chat, **el caching lo hace la herramienta por vos**. No tenés que activar nada. Tu `CLAUDE.md`, tu system prompt, los archivos que cargás — todo va al cache automáticamente. VSCode ha publicado que su prompt caching reuse rate dentro del editor es del **93%**.
+Si usás herramientas como Claude Code, Claude Cowork o Copilot Chat, **el caching lo hace la herramienta por vos**. No tenés que activar nada. Tu `CLAUDE.md`, tu system prompt, los archivos que cargás, todo va al cache automáticamente. VSCode ha publicado que su prompt caching reuse rate dentro del editor es del **93%**.
 
-Lo que sí podés hacer cuando estás en caja gris es **medir el efecto** (con OpenTelemetry, ver Sección 9) y **favorecer el cache con buenas prácticas**:
+Lo que sí podés hacer cuando estás en una herramienta con configuración es **medir el efecto** (con OpenTelemetry, ver Sección 9) y **favorecer el cache con buenas prácticas**:
 
 - Mantené estable la estructura de tus prompts. Cambiar el orden de las instrucciones invalida el cache.
 - No cierres y abras archivos sin necesidad. Cada vez que cambiás el set de archivos abiertos, podés estar invalidando porciones del cache.
@@ -529,7 +529,7 @@ Lo que sí podés hacer cuando estás en caja gris es **medir el efecto** (con O
 
 Acá sí lo activás vos, y hay **dos modos**: automatic y explicit. La diferencia tiene que ver con cuánto control querés sobre dónde se ubica el cache breakpoint.
 
-##### Automatic caching — el modo "empezás en 30 segundos"
+##### Automatic caching: el modo "empezás en 30 segundos"
 
 Anthropic agregó automatic caching a su API en abril 2026. La idea: en lugar de marcar manualmente qué bloque cachear, ponés un solo campo a nivel top-level del request y el sistema ubica el breakpoint solo, en el último bloque cacheable.
 
@@ -541,7 +541,7 @@ Anthropic agregó automatic caching a su API en abril 2026. La idea: en lugar de
 response = client.messages.create(
     model="claude-sonnet-4-6",
     max_tokens=1024,
-    cache_control={"type": "ephemeral"},  # ← automatic caching, top-level
+    cache_control={"type": "ephemeral"},  # automatic caching, top-level
     system="Sos un asistente interno de Visma. ...largo system prompt...",
     messages=[{"role": "user", "content": user_message}]
 )
@@ -551,7 +551,7 @@ response = client.messages.create(
 
 **Cuándo conviene automatic.** Es el modo recomendado para empezar. Si recién estás incorporando caching a tu app y querés ver el ahorro rápido sin tener que decidir qué cachear, este modo te lleva al 80% del beneficio con cero decisiones de diseño.
 
-##### Explicit caching — el modo "control fino"
+##### Explicit caching: el modo "control fino"
 
 Cuando necesitás caching más granular (múltiples bloques cacheables con TTLs distintos, control sobre exactamente qué se cachea y qué no), pasás a explicit. Marcás cada bloque que querés cachear con `cache_control` directamente. Hasta 4 breakpoints por request.
 
@@ -587,7 +587,7 @@ print(f"Cache read: {response.usage.cache_read_input_tokens}")
 "cache_control": {"type": "ephemeral", "ttl": "1h"}
 ```
 
-El cache write con TTL de 1h cuesta 2x base (en lugar de 1.25x), pero el cache read sigue siendo 10%. Si tu app hace llamadas en ventanas de 30-60 minutos, el TTL extendido es claramente conveniente. Si las llamadas se concentran en ráfagas de minutos, el TTL default de 5 min alcanza.
+El cache write con TTL de 1h cuesta 2x base (en lugar de 1.25x), pero el cache read sigue siendo 10%. Si tu app hace llamadas en ventanas de 30 a 60 minutos, el TTL extendido es claramente conveniente. Si las llamadas se concentran en ráfagas de minutos, el TTL default de 5 min alcanza.
 
 ##### Cómo verificás que el caching está funcionando
 
@@ -608,7 +608,7 @@ Esta es la parte que la mayoría de los devs no hace y por eso no sabe si su cac
 - `cache_read_input_tokens`: tokens que se leyeron del cache (al 10% del precio). En la primera llamada de la sesión está en cero. En la segunda llamada con el mismo prefix, debería ser igual a lo que era `cache_creation` la primera vez.
 - `output_tokens`: lo que generó el modelo.
 
-**El patrón saludable:** primera llamada → cache_creation alto, cache_read en cero. Segunda llamada (con el mismo prefix) → cache_creation en cero o bajo, cache_read alto. Tercera llamada → igual a la segunda. Y así.
+**El patrón saludable:** primera llamada, cache_creation alto, cache_read en cero. Segunda llamada (con el mismo prefix), cache_creation en cero o bajo, cache_read alto. Tercera llamada, igual a la segunda. Y así.
 
 **Si nunca ves cache_read distinto de cero**, el cache no está activando. Causas comunes:
 - El contenido cacheable está cambiando entre requests (típicamente porque hay un timestamp o un session ID al principio del prompt).
@@ -619,7 +619,7 @@ Una buena práctica es loguear `cache_read_input_tokens / (cache_read_input_toke
 
 ##### Caching en Bedrock y Vertex (mismo principio, misma sintaxis)
 
-Si consumís Claude vía AWS Bedrock o Google Vertex, la sintaxis es la misma — Anthropic mantiene paridad entre su API directa y los hyperscalers. Bedrock soporta `cache_control: {"type": "ephemeral"}` igual que la API directa.
+Si consumís Claude vía AWS Bedrock o Google Vertex, la sintaxis es la misma. Anthropic mantiene paridad entre su API directa y los hyperscalers. Bedrock soporta `cache_control: {"type": "ephemeral"}` igual que la API directa.
 
 > 🔧 **Capa 1** (código de app) · SDK Anthropic via Bedrock · Developers de apps con compliance EU o AWS-only
 
@@ -664,7 +664,7 @@ En aplicaciones agénticas y de chat el problema crónico, como vimos en la Secc
 
 > 🔧 **Capa 1** (código de app) · Helpers Python sobre el SDK · Developers de aplicación que diseñan el manejo de sesiones agénticas
 
-**Estrategia A — Ventana deslizante.** La más simple: mantener solo los últimos N turnos y descartar lo viejo. Es rápida, predecible y útil cuando la conversación no requiere memoria a largo plazo (asistentes de tareas puntuales, chats transaccionales).
+**Estrategia A: ventana deslizante.** La más simple: mantener solo los últimos N turnos y descartar lo viejo. Es rápida, predecible y útil cuando la conversación no requiere memoria a largo plazo (asistentes de tareas puntuales, chats transaccionales).
 
 ```python
 def get_windowed_history(messages, window_size=10):
@@ -675,7 +675,7 @@ def get_windowed_history(messages, window_size=10):
 
 **El riesgo:** si algo importante se mencionó en el turno 3 y la ventana es 10, al turno 13 el modelo lo "olvida". Para muchos casos eso es aceptable; para otros (asistentes de soporte, sesiones de debugging largas) no.
 
-**Estrategia B — Resumen progresivo.** Cuando la conversación crece, se toma todo lo viejo (todo menos los últimos N turnos recientes) y se resume con un modelo barato (Haiku idealmente). El resumen reemplaza el historial en la próxima llamada. Preserva memoria de largo plazo a costo bajo.
+**Estrategia B: resumen progresivo.** Cuando la conversación crece, se toma todo lo viejo (todo menos los últimos N turnos recientes) y se resume con un modelo barato (Haiku idealmente). El resumen reemplaza el historial en la próxima llamada. Preserva memoria de largo plazo a costo bajo.
 
 ```python
 def compress_old_history(messages, recent_window=5):
@@ -694,7 +694,7 @@ def compress_old_history(messages, recent_window=5):
 
 **Cuándo conviene:** asistentes que necesitan recordar el contexto general de una sesión larga (soporte, debugging, planificación) sin pagar el costo de re-enviar todo.
 
-**Estrategia C — Compaction API (beta enero 2026, elegible ZDR).** Esta es la opción más limpia y la recomendada para agentes en producción. En lugar de implementar tu propia lógica de resumen, Anthropic provee una API beta que se encarga de la compactación automáticamente cuando el contexto supera un umbral. Vos definís el threshold, el sistema decide cuándo y cómo compactar.
+**Estrategia C: Compaction API (beta enero 2026, elegible ZDR).** Esta es la opción más limpia y la recomendada para agentes en producción. En lugar de implementar tu propia lógica de resumen, Anthropic provee una API beta que se encarga de la compactación automáticamente cuando el contexto supera un umbral. Vos definís el threshold, el sistema decide cuándo y cómo compactar.
 
 ```python
 response = client.beta.messages.create(
@@ -746,11 +746,11 @@ OUTPUT_BUDGETS = {
 
 La idea es que una clasificación binaria nunca necesita 1.000 tokens de output (probablemente alcanza con 5), una extracción de entidades no debería pasar de 200, y solo las tareas que justifican respuesta larga (generación de código, diseño de arquitectura) reciben budgets grandes. Esto evita que el modelo "se explaye" cuando no es necesario, sin perder capacidad cuando sí lo es.
 
-Combinado con RAG, el flujo completo queda: retrieval acotado → contexto chico → output budget acotado al tipo de tarea. Resultado: factura predecible y orden de magnitud menor.
+Combinado con RAG, el flujo completo queda: retrieval acotado, contexto chico, output budget acotado al tipo de tarea. Resultado: factura predecible y orden de magnitud menor.
 
 ---
 
-## 6. Nivel 2 — Selección y asignación de modelos <a id="6-nivel-2"></a>
+## 6. Nivel 2: selección y asignación de modelos <a id="6-nivel-2"></a>
 
 Este nivel resuelve una pregunta que parece trivial pero rara vez se trata con rigor: **¿cuál modelo usás para cada tarea?** La respuesta default en la mayoría de los equipos es "el flagship para todo", y es exactamente el error que infla la factura.
 
@@ -789,13 +789,13 @@ def classify_and_route(user_input, client):
 - **Sonnet** para el grueso del trabajo de desarrollo: generación y revisión de código, resúmenes, chat general, debugging. Es el sweet spot precio/calidad y debería ser el default cuando la tarea no se puede clasificar claramente como simple o muy compleja.
 - **Opus** solo para lo realmente complejo: diseño de arquitectura, razonamiento multi-paso, coordinación entre agentes. Si tu aplicación gasta el grueso del presupuesto en Opus, hay una probabilidad alta de que estés sobrecalificando las tareas.
 
-**Una nota sobre el fallback:** la última línea (`MODEL_ASSIGNMENT.get(task_type, "claude-sonnet-4-6")`) hace que si el clasificador devuelve algo no esperado, se caiga a Sonnet por default. Es el valor seguro: si dudás, Sonnet. Nunca caer a Opus por default — ese debería ser siempre una decisión explícita y justificada.
+**Una nota sobre el fallback:** la última línea (`MODEL_ASSIGNMENT.get(task_type, "claude-sonnet-4-6")`) hace que si el clasificador devuelve algo no esperado, se caiga a Sonnet por default. Es el valor seguro: si dudás, Sonnet. Nunca caer a Opus por default, ese debería ser siempre una decisión explícita y justificada.
 
 **Implementación a escala:** Cuando hay varios servicios, este diccionario y la lógica de routing son exactamente lo que conviene mover al wrapper interno o al gateway (Sección 2.4). De esa forma la "tabla de asignación" es una sola, gobernable y auditable.
 
 ---
 
-## 7. Nivel 3 — Model routing automático <a id="7-nivel-3"></a>
+## 7. Nivel 3: model routing automático <a id="7-nivel-3"></a>
 
 El Nivel 2 resuelve la asignación con reglas explícitas: un diccionario hecho a mano que mapea tipos de tarea a modelos. Funciona muy bien cuando las categorías son claras y el dominio es estable.
 
@@ -828,10 +828,10 @@ response = client.chat.completions.create(model="router", messages=[...])
 
 Más allá de RouteLLM como solución específica, en producción enterprise se imponen los **AI gateways**: una capa de red por la que pasan todas las llamadas a LLMs y que centraliza routing, retries, fallbacks, presupuestos por equipo, guardrails y observabilidad. Es el equivalente a un API gateway tradicional, pero específico para LLMs.
 
-> 🔧 **Capa 4** (gateway compartido) · LiteLLM self-hosted / Portkey managed · Plataforma o equipo de infra. El código de los servicios consumidores NO cambia — el gateway intercepta
+> 🔧 **Capa 4** (gateway compartido) · LiteLLM self-hosted / Portkey managed · Plataforma o equipo de infra. El código de los servicios consumidores NO cambia, el gateway intercepta
 
 ```python
-# LiteLLM — self-hosted, budget controls
+# LiteLLM: self-hosted, budget controls
 from litellm import Router
 router = Router(
     model_list=[
@@ -841,7 +841,7 @@ router = Router(
     budget_manager={"type": "redis", "redis_url": os.getenv("REDIS_URL")}
 )
 
-# Portkey — managed, compliance
+# Portkey: managed, compliance
 from portkey_ai import Portkey
 client = Portkey(api_key="PORTKEY_API_KEY", virtual_key="ANTHROPIC_VIRTUAL_KEY")
 response = client.chat.completions.create(
@@ -868,17 +868,17 @@ Hay tres jugadores principales en este espacio y conviene entender en qué se di
 
 ---
 
-## 8. Nivel 4 — Infraestructura de costo y gobernanza <a id="8-nivel-4"></a>
+## 8. Nivel 4: infraestructura de costo y gobernanza <a id="8-nivel-4"></a>
 
 Este nivel reúne tres palancas que tienen en común no ser optimizaciones de prompt o de modelo, sino **decisiones de infraestructura y procesos** que cambian la estructura del costo. Cada una tiene su lógica:
 
-1. **Batch API** — Para trabajos no-realtime, mitad de precio sin pérdida de calidad.
-2. **DeepSeek vía Azure** — Para tareas masivas baratas con compliance europeo.
-3. **Stoppers y observabilidad** — Para que el costo no se desborde sin avisar.
+1. **Batch API.** Para trabajos no-realtime, mitad de precio sin pérdida de calidad.
+2. **DeepSeek vía Azure.** Para tareas masivas baratas con compliance europeo.
+3. **Stoppers y observabilidad.** Para que el costo no se desborde sin avisar.
 
 ### 8.1 Batch API (50% descuento, calidad idéntica)
 
-Una buena parte del consumo de LLM en empresas no necesita responder en tiempo real. Procesar 50.000 documentos para extraer entidades, generar embeddings de un corpus, evaluar miles de respuestas contra una rúbrica, hacer clasificación masiva de tickets históricos — todos esos casos pueden esperar minutos u horas para devolver resultados.
+Una buena parte del consumo de LLM en empresas no necesita responder en tiempo real. Procesar 50.000 documentos para extraer entidades, generar embeddings de un corpus, evaluar miles de respuestas contra una rúbrica, hacer clasificación masiva de tickets históricos: todos esos casos pueden esperar minutos u horas para devolver resultados.
 
 Para esos casos, Anthropic (y OpenAI) ofrecen Batch API: las llamadas se procesan asincrónicamente cuando hay capacidad disponible, con un SLA de hasta 24 horas, **al 50% del precio normal**. No hay pérdida de calidad: es exactamente el mismo modelo, solo con un canal de latencia distinto.
 
@@ -931,9 +931,9 @@ response = client.chat.completions.create(
 
 El acceso directo a DeepSeek (`api.deepseek.com`) **no es viable para empresas con datos EU** porque rutea todos los requests por servidores chinos, lo cual choca de frente con cualquier requerimiento serio de GDPR o data residency.
 
-Azure agrega un markup del **20–35% sobre el precio directo** ([DeployBase, 2026](https://deploybase.ai/articles/deepseek-v3-pricing)), pero **ese markup no es overhead general, es prima de compliance**: los datos quedan en la región Azure que elegiste (EU si así lo necesitás), el contrato es con Microsoft, y el compliance europeo está cubierto. Aun con ese 20–35% encima, DeepSeek vía Azure sigue costando aproximadamente **1/15 lo que Sonnet**, así que para clasificación masiva, extracción estructurada o batch processing offline, sigue siendo la mejor relación precio/compliance del mercado.
+Azure agrega un markup del **20 a 35% sobre el precio directo** ([DeployBase, 2026](https://deploybase.ai/articles/deepseek-v3-pricing)), pero **ese markup no es overhead general, es prima de compliance**: los datos quedan en la región Azure que elegiste (EU si así lo necesitás), el contrato es con Microsoft, y el compliance europeo está cubierto. Aun con ese 20 a 35% encima, DeepSeek vía Azure sigue costando aproximadamente **1/15 lo que Sonnet**, así que para clasificación masiva, extracción estructurada o batch processing offline, sigue siendo la mejor relación precio/compliance del mercado.
 
-**Nota crítica:** Este es uno de los pocos casos donde el hyperscaler es la elección correcta por razones de modelo, no de procurement general. Para Claude o GPT, el mismo cálculo no aplica (ver Sección 3 — pricing parity nominal). La regla es: **si el modelo en sí no es accesible directamente con compliance, el hyperscaler vale el markup; si el modelo ya está disponible directamente del vendor con compliance, el hyperscaler suma overhead sin agregar valor.**
+**Nota crítica:** Este es uno de los pocos casos donde el hyperscaler es la elección correcta por razones de modelo, no de procurement general. Para Claude o GPT, el mismo cálculo no aplica (ver Sección 3 sobre pricing parity nominal). La regla es: **si el modelo en sí no es accesible directamente con compliance, el hyperscaler vale el markup; si el modelo ya está disponible directamente del vendor con compliance, el hyperscaler suma overhead sin agregar valor.**
 
 ### 8.3 Stoppers y observabilidad de costo
 
@@ -945,12 +945,12 @@ Antes de instrumentar nada custom, **cada herramienta tiene un mecanismo nativo 
 
 | Herramienta | Hay stopper por default | Dónde se configura |
 |---|---|---|
-| **GitHub Copilot (nuevo billing junio 2026)** | No. Por encima de los AI Credits del seat, el overage se factura sin límite | Admin organización en GitHub → Billing & Plans → setear "spending limit" en cero o en un monto X |
-| **Cursor** | Hay tope por plan, pero permite "additional usage" si lo activás | Settings de la org → desactivar overage |
+| **GitHub Copilot (nuevo billing junio 2026)** | No. Por encima de los AI Credits del seat, el overage se factura sin límite | Admin organización en GitHub, Billing & Plans, setear "spending limit" en cero o en un monto X |
+| **Cursor** | Hay tope por plan, pero permite "additional usage" si lo activás | Settings de la org, desactivar overage |
 | **Claude Desktop / Code (planes Pro/Team/Enterprise)** | Sí, te corta cuando se acaba la cuota del plan | Subir de plan o esperar reset mensual |
-| **Anthropic API directa** | No. Cobra hasta que llegue el límite de tu tarjeta o tu workspace limit | Consola Anthropic → Limits → Workspace spend limit |
-| **OpenAI API directa** | No. Mismo modelo que Anthropic | Dashboard OpenAI → Settings → Limits → Monthly budget |
-| **Azure OpenAI / Bedrock** | No. Va a la factura cloud sin tope salvo que se ponga budget alert | Azure Cost Management → Budgets, AWS Budgets → alertas en X% del presupuesto |
+| **Anthropic API directa** | No. Cobra hasta que llegue el límite de tu tarjeta o tu workspace limit | Consola Anthropic, Limits, Workspace spend limit |
+| **OpenAI API directa** | No. Mismo modelo que Anthropic | Dashboard OpenAI, Settings, Limits, Monthly budget |
+| **Azure OpenAI / Bedrock** | No. Va a la factura cloud sin tope salvo que se ponga budget alert | Azure Cost Management, Budgets, AWS Budgets, alertas en X% del presupuesto |
 
 **Cómo se lee esta tabla operacionalmente.** Para cada herramienta que use tu BU:
 1. Entrá a la consola admin correspondiente.
@@ -991,20 +991,20 @@ class BudgetMonitor:
 **Tres puntos importantes sobre este patrón:**
 
 1. **Los thresholds están graduados.** Al 50% se avisa para que el usuario tenga visibilidad; al 80% para que actúe; al 100% para que escale o se detenga. Avisar solo al 100% es demasiado tarde.
-2. **`alerted` evita spam.** Una vez que se cruza un threshold, no se vuelve a notificar — los usuarios desactivan notificaciones que les llegan cien veces al día.
+2. **`alerted` evita spam.** Una vez que se cruza un threshold, no se vuelve a notificar. Los usuarios desactivan notificaciones que les llegan cien veces al día.
 3. **Donde ponerlo importa.** Si lo metés en cada servicio, cada equipo tiene su propio monitor (drift, datos inconsistentes). Si lo metés en el gateway compartido (Capa 4), una sola implementación gobierna todo el tráfico de la empresa. Cuanto más grande la organización, más conviene la opción del gateway.
 
-A escala enterprise, este patrón básico se complementa con OTel (Sección 9) para tener métricas, traces y logs unificados — y dashboards que muestran consumo por equipo, por modelo, por feature.
+A escala enterprise, este patrón básico se complementa con OTel (Sección 9) para tener métricas, traces y logs unificados, y dashboards que muestran consumo por equipo, por modelo, por feature.
 
 ---
 
-## 9. Nivel 5 — Observabilidad con OpenTelemetry y gobernanza personal <a id="9-otel"></a>
+## 9. Nivel 5: observabilidad con OpenTelemetry y gobernanza personal <a id="9-otel"></a>
 
 Si los niveles anteriores tratan sobre **ahorrar** tokens, este nivel trata sobre **saber qué está pasando**. Sin observabilidad, todas las optimizaciones son apuestas a ciegas: no podés afirmar que el caching está funcionando, no sabés qué equipo gasta más, no podés detectar regresiones de costo cuando se introducen.
 
 OpenTelemetry (OTel) se convirtió en el estándar de facto para observabilidad de IA. Tiene tres ventajas frente a alternativas propietarias: es vendor-neutral (los datos no quedan atrapados en un SaaS), tiene soporte nativo en los CLIs de los principales proveedores (Claude Code, Copilot) y se integra con cualquier backend (Grafana, Prometheus, Jaeger, Langfuse, etc.).
 
-Esta sección tiene dos audiencias: **individuos** que quieren ver su propio consumo (Sección 9.6) y **plataformas** que quieren observar a toda la empresa (Secciones 9.1-9.5). Las dos comparten la misma tecnología, cambia solo la escala.
+Esta sección tiene dos audiencias: **individuos** que quieren ver su propio consumo (Sección 9.6) y **plataformas** que quieren observar a toda la empresa (Secciones 9.1 a 9.5). Las dos comparten la misma tecnología, cambia solo la escala.
 
 ### 9.1 OTel en Claude Code (CLI)
 
@@ -1037,12 +1037,12 @@ export OTEL_RESOURCE_ATTRIBUTES="team.id=platform,department=engineering"
 
 **Qué métricas vas a ver.** Claude Code emite seis tipos de métricas, con nombres textuales (estos son los nombres reales que vas a buscar en Grafana o Prometheus):
 
-- `claude_code_token_usage` — desglosado en `input`, `output`, `cache_creation` y `cache_read`. La métrica clave para saber cuánto contexto repetido estás reenviando.
-- `claude_code_cost_usage` — costo en USD por API call.
-- `claude_code_session_count` — número de sesiones que abriste.
-- `claude_code_active_time_total` — tiempo activo de Claude Code.
-- `claude_code_lines_of_code_count` — líneas de código agregadas y removidas.
-- `claude_code_code_edit_tool_decision` — accept/reject de sugerencias, desglosado por lenguaje.
+- `claude_code_token_usage`: desglosado en `input`, `output`, `cache_creation` y `cache_read`. La métrica clave para saber cuánto contexto repetido estás reenviando.
+- `claude_code_cost_usage`: costo en USD por API call.
+- `claude_code_session_count`: número de sesiones que abriste.
+- `claude_code_active_time_total`: tiempo activo de Claude Code.
+- `claude_code_lines_of_code_count`: líneas de código agregadas y removidas.
+- `claude_code_code_edit_tool_decision`: accept/reject de sugerencias, desglosado por lenguaje.
 
 ### 9.2 OTel en Copilot Chat
 
@@ -1066,11 +1066,11 @@ Para Copilot la activación es por settings, más simple que en Claude Code:
 }
 ```
 
-**Atributos que exporta.** Copilot Chat sigue las **GenAI Semantic Conventions** de OpenTelemetry — un estándar abierto para nombrar atributos de telemetría de LLMs. Los principales que vas a ver:
-- `gen_ai.request.model` — qué modelo se invocó.
-- `gen_ai.provider.name` — qué proveedor (anthropic, openai, etc.).
-- `gen_ai.tool.name` — qué herramienta se ejecutó.
-- `copilot_chat.edit.source` — de dónde vino una edición.
+**Atributos que exporta.** Copilot Chat sigue las **GenAI Semantic Conventions** de OpenTelemetry, un estándar abierto para nombrar atributos de telemetría de LLMs. Los principales que vas a ver:
+- `gen_ai.request.model`: qué modelo se invocó.
+- `gen_ai.provider.name`: qué proveedor (anthropic, openai, etc.).
+- `gen_ai.tool.name`: qué herramienta se ejecutó.
+- `copilot_chat.edit.source`: de dónde vino una edición.
 - Token counts y durations por cada span.
 
 **Nota importante:** el OTel monitoring viene **off por default** en Copilot Chat. Hay que activarlo explícitamente. Está bien que sea así porque te da control de qué se exporta y a dónde, especialmente importante por privacidad: por default solo se exportan metadatos (tokens, modelo, duraciones), no el contenido de prompts ni respuestas. Si querés capturar contenido completo:
@@ -1079,7 +1079,7 @@ Para Copilot la activación es por settings, más simple que en Claude Code:
 { "github.copilot.chat.otel.captureContent": true }
 ```
 
-Y aclaración del lado del vendor: "Content capture can include sensitive information such as code, file contents, and user prompts" — manejarlo con cuidado.
+Y aclaración del lado del vendor: "Content capture can include sensitive information such as code, file contents, and user prompts". Manejarlo con cuidado.
 
 Tanto Claude Code como Copilot emiten al endpoint OTLP, por lo cual podés tener **un único backend que consolide la observabilidad de todos los productos de IA del equipo**, independientemente de qué herramienta esté usando cada dev.
 
@@ -1138,7 +1138,7 @@ Una vez levantado, las trazas y métricas de Claude Code/Copilot fluyen al colle
 
 ### 9.5 Configuración centralizada (MDM)
 
-A escala enterprise no podés pedirle a cada developer que configure su shell con las variables OTel. La forma estándar de hacerlo es distribuir la configuración vía MDM (Intune para Windows, Jamf para Mac) — una sola política push se aplica a todos los devs y queda gobernada centralizadamente.
+A escala enterprise no podés pedirle a cada developer que configure su shell con las variables OTel. La forma estándar de hacerlo es distribuir la configuración vía MDM (Intune para Windows, Jamf para Mac). Una sola política push se aplica a todos los devs y queda gobernada centralizadamente.
 
 > 🔧 **Capa 3** (managed settings enterprise) · JSON distribuible vía MDM (Intune, Jamf) · Admin de plataforma de developers
 
@@ -1155,7 +1155,7 @@ Con esto, **todos los developers del grupo quedan instrumentados automáticament
 
 ### 9.6 Gobernanza personal: tu propio dashboard en 10 minutos
 
-Las secciones 9.1-9.5 están pensadas para plataforma. Esta sección es distinta: es para **cualquier persona que use IA todos los días** y quiera ver su propio consumo, sin esperar a que el equipo de plataforma arme infraestructura.
+Las secciones 9.1 a 9.5 están pensadas para plataforma. Esta sección es distinta: es para **cualquier persona que use IA todos los días** y quiera ver su propio consumo, sin esperar a que el equipo de plataforma arme infraestructura.
 
 La idea: con las mismas tecnologías que la sección anterior pero a escala individual, en 10 minutos cualquier dev puede tener su dashboard personal que le responde:
 
@@ -1165,7 +1165,7 @@ La idea: con las mismas tecnologías que la sección anterior pero a escala indi
 - ¿Cuántos tokens fueron input vs output?
 - ¿Cuánto me cuesta cada día?
 
-#### Camino A — Grafana Cloud (sin servidor, free tier)
+#### Camino A: Grafana Cloud (sin servidor, free tier)
 
 Esta es la opción más rápida y más cómoda. Grafana ofrece un tier gratis que incluye un endpoint OTLP, base de datos de métricas y dashboards. Cero infraestructura local, todo desde el browser.
 
@@ -1190,7 +1190,7 @@ Notá que cambia `OTEL_EXPORTER_OTLP_PROTOCOL` a `http/protobuf` en este caso (G
 5. Hacer `source ~/.zshrc` (o reiniciar la terminal). De ahí en adelante, cada sesión de Claude Code va a mandar métricas a Grafana Cloud.
 6. En el browser, vas al dashboard de Grafana Cloud y armás las visualizaciones que querés.
 
-#### Camino B — Aspire Dashboard local (si preferís que nada salga de tu máquina)
+#### Camino B: Aspire Dashboard local (si preferís que nada salga de tu máquina)
 
 Si por temas de privacidad preferís que las métricas no salgan de tu computadora, levantás el container de Aspire Dashboard (el mismo de la Sección 9.3). Mismo `docker run`, y las variables apuntan a `localhost:4317` en lugar de Grafana Cloud.
 
@@ -1200,11 +1200,11 @@ Trade-off: el dashboard solo está disponible cuando el container está corriend
 
 Una vez que el backend está recibiendo datos, las cinco preguntas de gobernanza personal se traducen así en términos de PromQL (el lenguaje de queries de Prometheus, también usado por Grafana Cloud):
 
-- **¿Cuántas sesiones abrí esta semana?** Query: `sum(claude_code_session_count) by (day)` — gráfico de barras agrupado por día.
+- **¿Cuántas sesiones abrí esta semana?** Query: `sum(claude_code_session_count) by (day)`, gráfico de barras agrupado por día.
 - **¿Cuánto estoy reenviando de contexto repetido?** Query: ratio entre `claude_code_token_usage{type="cache_read"}` y `claude_code_token_usage{type="input"}`. Cuanto más alto el `cache_read`, mejor.
-- **¿Qué modelos estoy usando, en qué proporción?** Query: `sum(claude_code_token_usage) by (model)` — pie chart o barras horizontales.
-- **¿Cuántos tokens input vs output?** Query: `sum(claude_code_token_usage) by (type)` filtrando `type="input"` vs `type="output"`. El output cuesta 4-6x más, así que ver esta proporción te dice si tus pedidos están sesgados a generación pesada.
-- **¿Cuánto me cuesta cada día?** Query: `sum(claude_code_cost_usage) by (day)` — línea temporal.
+- **¿Qué modelos estoy usando, en qué proporción?** Query: `sum(claude_code_token_usage) by (model)`, pie chart o barras horizontales.
+- **¿Cuántos tokens input vs output?** Query: `sum(claude_code_token_usage) by (type)` filtrando `type="input"` vs `type="output"`. El output cuesta 4 a 6x más, así que ver esta proporción te dice si tus pedidos están sesgados a generación pesada.
+- **¿Cuánto me cuesta cada día?** Query: `sum(claude_code_cost_usage) by (day)`, línea temporal.
 
 Si nunca tocaste Grafana, el camino más rápido es importar un dashboard pre-armado: hay varios open source en https://grafana.com/grafana/dashboards/ buscando "Claude Code" o "OpenTelemetry GenAI" que ya tienen estas queries y otras.
 
@@ -1218,13 +1218,13 @@ Diez minutos de setup. Cero euros de costo. Las preguntas de gobernanza personal
 
 ---
 
-## 10. Nivel 6 — Proveedores alternativos de menor costo <a id="10-alternativas"></a>
+## 10. Nivel 6: proveedores alternativos de menor costo <a id="10-alternativas"></a>
 
-Para cerrar el cuadro: además de optimizar Claude/GPT, hay un universo de proveedores alternativos que para ciertos casos resultan radicalmente más baratos. La franja de precios es enorme — **los precios varían hasta 625x entre el modelo más caro y el más barato del mercado**. La mayoría de los equipos paga entre 4x y 30x más de lo necesario para tareas donde un modelo barato rinde igual.
+Para cerrar el cuadro: además de optimizar Claude/GPT, hay un universo de proveedores alternativos que para ciertos casos resultan radicalmente más baratos. La franja de precios es enorme: **los precios varían hasta 625x entre el modelo más caro y el más barato del mercado**. La mayoría de los equipos paga entre 4x y 30x más de lo necesario para tareas donde un modelo barato rinde igual.
 
 La estrategia no es "reemplazar todo por el más barato": es **identificar las tareas donde un modelo alternativo da el mismo resultado** y rutear esas tareas allí, dejando Claude/GPT para el trabajo que justifica su precio.
 
-### Groq — LPU hardware, velocidad extrema
+### Groq: LPU hardware, velocidad extrema
 
 Groq tiene hardware custom (LPUs, Language Processing Units) que sirven modelos open source con latencias sub-100ms. Es la elección para tareas que necesitan respuesta instantánea: clasificación inline, autocompletado, moderación de contenido, routing de mensajes.
 
@@ -1237,9 +1237,9 @@ response = client.chat.completions.create(model="llama-4-scout-17b-16e-instruct"
     messages=[{"role": "user", "content": text}], max_tokens=50)
 ```
 
-Llama 4 vía Groq cuesta aproximadamente $0.11/MTok input. Es entre **4 y 10 veces más barato que GPT-4o** para tareas equivalentes, con latencias sub-100ms (frente a 500ms-1s de los providers tradicionales). Notá el patrón de integración: el SDK de OpenAI funciona apuntando a la URL de Groq — no hay que aprender un nuevo SDK, solo cambiar el `base_url`.
+Llama 4 vía Groq cuesta aproximadamente $0.11/MTok input. Es entre **4 y 10 veces más barato que GPT-4o** para tareas equivalentes, con latencias sub-100ms (frente a 500ms a 1s de los providers tradicionales). Notá el patrón de integración: el SDK de OpenAI funciona apuntando a la URL de Groq, no hay que aprender un nuevo SDK, solo cambiar el `base_url`.
 
-### Together AI — 100+ modelos
+### Together AI: 100+ modelos
 
 Together AI hostea más de 100 modelos open source con SLA empresarial y soporte de fine-tuning. Es la elección para batch processing high-volume y para casos donde necesitás un modelo específico open source que no esté disponible en otras plataformas.
 
@@ -1255,9 +1255,9 @@ response = client.chat.completions.create(
 
 Mismo patrón que Groq: SDK de OpenAI apuntando a otro endpoint. El plus de Together es la diversidad de modelos disponibles y el soporte de fine-tuning gestionado.
 
-### Mistral — El único provider major europeo
+### Mistral: el único provider major europeo
 
-Mistral tiene sede en Francia, GDPR nativo, datos en la UE. Es la única alternativa de proveedor de modelos major **europea directa** — sin pasar por hyperscaler, sin overhead de procurement, con compliance europeo asegurado por contrato directo.
+Mistral tiene sede en Francia, GDPR nativo, datos en la UE. Es la única alternativa de proveedor de modelos major **europea directa**: sin pasar por hyperscaler, sin overhead de procurement, con compliance europeo asegurado por contrato directo.
 
 > 🔧 **Capa 1** (código de app) · SDK OpenAI con base_url alternativa · Developers de aplicación que necesitan GDPR nativo sin pasar por hyperscaler
 
@@ -1272,18 +1272,18 @@ Para empresas europeas que necesitan minimizar dependencias americanas y mantene
 
 ### Guía de decisión
 
-Esta tabla resume cuál proveedor conviene para cuál tarea. La regla operativa: **cada tarea va al proveedor que mejor balancea calidad, precio y compliance para esa tarea específica** — no hay un proveedor "ganador" universal.
+Esta tabla resume cuál proveedor conviene para cuál tarea. La regla operativa: **cada tarea va al proveedor que mejor balancea calidad, precio y compliance para esa tarea específica**. No hay un proveedor "ganador" universal.
 
 | Tarea | Provider | Razón |
 |-------|----------|--------|
 | Razonamiento complejo | Claude Opus / GPT-5 | Calidad insustituible |
 | Código general | Claude Sonnet | Mejor balance |
-| Clasificación masiva | Groq (Llama 4) | 4–10x más barato, sub-100ms |
+| Clasificación masiva | Groq (Llama 4) | 4 a 10x más barato, sub-100ms |
 | Batch offline | Together AI / Fireworks | Precio bajo con SLA |
 | Data residency EU | Mistral | Único major europeo |
 | Compliance EU + costo mínimo | DeepSeek via Azure | Compliance + 15x más barato |
 
-**Una nota sobre self-hosting:** correr modelos open source en GPUs propias (con vLLM por ejemplo) puede ser tentador y aparenta máximo control. La regla práctica documentada: solo se justifica económicamente a partir de **$5K–10K/mes de consumo sostenido y 70%+ de utilización de GPU**. Por debajo de eso, el costo operativo (GPUs, observabilidad, scaling, fallbacks, on-call) supera el ahorro nominal. Fuente: [morphllm.com](https://www.morphllm.com/llm-api). Para la gran mayoría de los equipos, los providers managed son más baratos en TCO real.
+**Una nota sobre self-hosting:** correr modelos open source en GPUs propias (con vLLM por ejemplo) puede ser tentador y aparenta máximo control. La regla práctica documentada: solo se justifica económicamente a partir de **$5K a $10K/mes de consumo sostenido y 70%+ de utilización de GPU**. Por debajo de eso, el costo operativo (GPUs, observabilidad, scaling, fallbacks, on-call) supera el ahorro nominal. Fuente: [morphllm.com](https://www.morphllm.com/llm-api). Para la gran mayoría de los equipos, los providers managed son más baratos en TCO real.
 
 ---
 
@@ -1294,10 +1294,10 @@ Cierre del documento: todas las métricas usadas a lo largo de las secciones, co
 | Métrica | Valor | Fuente | URL |
 |---------|-------|--------|-----|
 | Contexto re-enviado = % factura | 62% | LeanOps 2026 | https://leanopstech.com/blog/agentic-ai-cost-runaway-token-budget-2026/ |
-| Tokens turno 1 vs turno 50 | 5K → 200K | Redblink | https://redblink.com/ai-token-cost-optimization/ |
-| Multiplicador output vs input | 4–6x | Redis 2026 | https://redis.io/blog/llm-token-optimization-speed-up-apps/ |
+| Tokens turno 1 vs turno 50 | 5K a 200K | Redblink | https://redblink.com/ai-token-cost-optimization/ |
+| Multiplicador output vs input | 4 a 6x | Redis 2026 | https://redis.io/blog/llm-token-optimization-speed-up-apps/ |
 | Descuento cache reads | 90% | TokenOptimize.dev | https://www.tokenoptimize.dev/guides/llm-token-optimization-strategies |
-| Ahorro app RAG con caching | 88–95% | Finout | https://www.finout.io/blog/anthropic-api-pricing |
+| Ahorro app RAG con caching | 88 a 95% | Finout | https://www.finout.io/blog/anthropic-api-pricing |
 | VSCode prompt caching reuse | 93% | VS Magazine | https://visualstudiomagazine.com/articles/2026/04/30/vs-code-curbs-token-use-ahead-of-copilots-controversial-usage-based-billing-switch.aspx |
 | Prompt caching automatic vs explicit | Documentado | Anthropic oficial | https://platform.claude.com/docs/en/build-with-claude/prompt-caching |
 | Prompt caching break-even | 1 hit | MetaCTO | https://www.metacto.com/blogs/anthropic-api-pricing-a-full-breakdown-of-costs-and-integration |
@@ -1307,28 +1307,28 @@ Cierre del documento: todas las métricas usadas a lo largo de las secciones, co
 | RouteLLM con augmentation | 75% | LMSYS ICLR 2025 | https://www.lmsys.org/blog/2024-07-01-routellm/ |
 | Tool search VSCode | hasta 20% | VS Magazine | https://visualstudiomagazine.com/articles/2026/04/30/vs-code-curbs-token-use-ahead-of-copilots-controversial-usage-based-billing-switch.aspx |
 | Copilot Auto Mode | 10% descuento | GitHub Changelog | https://github.blog/changelog/2026-04-17-github-copilot-cli-now-supports-copilot-auto-model-selection/ |
-| Copilot top usuarios = spend | 10–15% = 60–70% | Synapx | https://www.synapx.com/github-copilot-usage-based-billing-executive-guide/ |
+| Copilot top usuarios = spend | 10 a 15% = 60 a 70% | Synapx | https://www.synapx.com/github-copilot-usage-based-billing-executive-guide/ |
 | Agentic cost | ~3.5x flat fee | Synapx | https://www.synapx.com/github-copilot-usage-based-billing-executive-guide/ |
 | Batch API | 50% descuento | Anthropic | https://www.finout.io/blog/anthropic-api-pricing |
 | Batch + caching | hasta 95% | PECollective | https://pecollective.com/tools/anthropic-api-pricing/ |
 | Thinking omitted = ahorro | Ninguno | CheckThat.ai | https://checkthat.ai/brands/anthropic/pricing |
 | Thinking 2000t + 500t output | 5x más caro | PECollective | https://pecollective.com/tools/anthropic-api-pricing/ |
 | Opus 4.7 tokenizer overhead | hasta 35% más tokens | Finout | https://www.finout.io/blog/anthropic-api-pricing |
-| Azure EA solo | 15–25% | Microsoft Negotiations | https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing |
-| Azure EA + MACC | 23–28% | Microsoft Negotiations | https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing |
-| **Azure OpenAI overhead vs OpenAI directo** | **15–40% (avg 22%)** | **TokenMix** | **https://tokenmix.ai/blog/azure-openai-cost** |
-| **Azure OpenAI overhead vs OpenAI directo** | **15–40%** | **Inference.net** | **https://inference.net/content/azure-openai-pricing-explained/** |
-| **Azure OpenAI overhead vs OpenAI directo** | **20–40%** | **CloudZero** | **https://www.cloudzero.com/blog/azure-openai-pricing/** |
-| **Bedrock Claude overhead vs Anthropic directo** | **20–35% efectivo** | **TokenMix Bedrock** | **https://tokenmix.ai/blog/aws-bedrock-pricing** |
+| Azure EA solo | 15 a 25% | Microsoft Negotiations | https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing |
+| Azure EA + MACC | 23 a 28% | Microsoft Negotiations | https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing |
+| **Azure OpenAI overhead vs OpenAI directo** | **15 a 40% (avg 22%)** | **TokenMix** | **https://tokenmix.ai/blog/azure-openai-cost** |
+| **Azure OpenAI overhead vs OpenAI directo** | **15 a 40%** | **Inference.net** | **https://inference.net/content/azure-openai-pricing-explained/** |
+| **Azure OpenAI overhead vs OpenAI directo** | **20 a 40%** | **CloudZero** | **https://www.cloudzero.com/blog/azure-openai-pricing/** |
+| **Bedrock Claude overhead vs Anthropic directo** | **20 a 35% efectivo** | **TokenMix Bedrock** | **https://tokenmix.ai/blog/aws-bedrock-pricing** |
 | **Bedrock regional endpoints premium** | **+10% sobre global** | **Anthropic docs oficial** | **https://platform.claude.com/docs/en/about-claude/pricing** |
 | **Foundry Claude credits exclusion** | **No aplican Azure credits** | **Microsoft Q&A** | **https://learn.microsoft.com/en-us/answers/questions/5851352** |
 | **Caso documentado Foundry trap** | **~$13K USD/mes una startup** | **AZ365.ai marzo 2026** | **https://az365.ai/blog/claude-on-azure-the-marketplace-billing-trap/** |
 | **Pricing parity Claude Bedrock/Vertex/Foundry** | **Idéntico al directo** | **Anthropic docs oficial** | **https://platform.claude.com/docs/en/build-with-claude/claude-in-microsoft-foundry** |
-| DeepSeek via Azure markup | +20–35% | DeployBase | https://deploybase.ai/articles/deepseek-v3-pricing |
+| DeepSeek via Azure markup | +20 a 35% | DeployBase | https://deploybase.ai/articles/deepseek-v3-pricing |
 | DeepSeek V4-Flash vs Sonnet | ~15x más barato | Precios 2026 | https://techjacksolutions.com/ai-tools/deepseek/deepseek-pricing/ |
 | AI % gasto IT | hasta 50% | Deloitte 2026 | https://redblink.com/ai-token-cost-optimization/ |
-| Groq vs GPT-4o | 4–10x más barato | ToolHalla 2026 | https://toolhalla.ai/blog/groq-vs-together-vs-fireworks-2026 |
-| Self-hosting break-even | $5K–10K/mes | morphllm.com | https://www.morphllm.com/llm-api |
+| Groq vs GPT-4o | 4 a 10x más barato | ToolHalla 2026 | https://toolhalla.ai/blog/groq-vs-together-vs-fireworks-2026 |
+| Self-hosting break-even | $5K a $10K/mes | morphllm.com | https://www.morphllm.com/llm-api |
 | Anthropic pricing oficial mayo 2026 | Sonnet $3/$15, Opus $5/$25, Haiku $1/$5 | Anthropic | https://platform.claude.com/docs/en/about-claude/pricing |
 | OpenAI pricing oficial 2026 | GPT-5.4 $2.50/$15, GPT-5.5 $5/$30, Nano $0.05/$0.40 | OpenAI / Finout | https://openai.com/api/pricing/ |
 | GenAI Semantic Conventions OTel | Estándar abierto | OpenTelemetry oficial | https://opentelemetry.io/docs/specs/semconv/gen-ai/ |
