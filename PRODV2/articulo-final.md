@@ -16,7 +16,7 @@ Ese período se termina. Y se termina de la peor manera posible: con el cambio d
 
 Visto así, **este evento es la excusa correcta para una conversación que ya nos debíamos.** El 1 de junio no inventa el problema, lo hace visible. Y mientras el problema fue invisible, nadie tenía razones para construir la capacidad. Ahora sí.
 
-Este artículo cuenta la historia: qué está pasando, por qué importa, qué palancas existen, dónde están. Es la lectura "para entender". Cuando algún punto te enganche y quieras profundizar en el cómo (los snippets, los settings exactos, los comandos para configurar), todo eso vive en la **documentación técnica del proyecto** (`PRODV2/doc-tecnico-final.md`). Este texto te dice qué buscar; el técnico te dice cómo hacerlo.
+Este artículo cuenta la historia: qué está pasando, por qué importa, qué optimizaciones existen, dónde están. Es la lectura "para entender". Cuando algún punto te enganche y quieras profundizar en el cómo (los snippets, los settings exactos, los comandos para configurar), todo eso vive en la **documentación técnica del proyecto** (Link al documento técnico). Este texto te dice qué buscar; el técnico te dice cómo hacerlo.
 
 Hay una idea que va a aparecer varias veces: gastar bien, no gastar menos. No estamos buscando achicar la IA. Estamos buscando que cada euro que se pone en IA esté trabajando, no calentando aire.
 
@@ -42,7 +42,7 @@ Hay una idea muy difundida que dice que el mundo de la IA se divide en dos: las 
 
 **Productos cerrados.** Aplicaciones tipo chat sin instrumentación pensada para el usuario: ChatGPT versión consumer, Gemini, Claude.ai en planes Free/Pro. Lo único que ves es el chat, la respuesta, alguna cuota mensual del plan. No tenés model picker, no podés modificar parámetros, no hay telemetría que se pueda exportar. Cualquier optimización seria depende de lo que el vendor decida exponer, que es típicamente nada.
 
-**Herramientas con configuración.** Productos que sí permiten controlar bastante: Copilot dentro de VSCode (el caso más común en Visma), Claude Code, Cursor, Claude Cowork en planes Team o Enterprise. Acá podés elegir modelo, activar telemetría, configurar settings que mueven el costo (Auto Mode, compresión de output, control de MCPs), monitorear consumo desde el propio IDE. El caching lo hace la herramienta por vos. No tenés acceso a las palancas más profundas pero sí a una buena cantidad de optimización accesible.
+**Herramientas con configuración.** Productos que sí permiten controlar bastante: Copilot dentro de VSCode (el caso más común en Visma), Claude Code, Cursor, Claude Cowork en planes Team o Enterprise. Acá podés elegir modelo, activar telemetría, configurar settings que mueven el costo (Auto Mode, compresión de output, control de MCPs), monitorear consumo desde el propio IDE. El caching lo hace la herramienta por vos. No tenés acceso a las opciones más profundas pero sí a una buena cantidad de optimización accesible.
 
 **API directa.** Vos escribís el código que llama al modelo: Anthropic API directa, OpenAI API, AWS Bedrock, Google Vertex, Azure OpenAI. Control total: prompt exacto, contexto, modelo, parámetros como temperature/top_p/top_k, caching explícito, métricas por llamada, costos por token. Es donde viven los descuentos más grandes (caching al 90%, batch al 50%) pero requiere construir.
 
@@ -64,7 +64,7 @@ Lo concreto para vos: las técnicas que mueven la aguja son las mismas. Mantené
 
 ### "¿Cómo funciona prompt caching y para qué sirve?"
 
-Acá está una de las palancas más grandes del sistema. La idea es simple: **el mismo contenido enviado dos veces no cuesta dos veces**. Anthropic cobra los tokens cacheados a un 10% del precio normal, descuento del 90% en los reads. El primer envío (cache write) cuesta un poquito más, 25% extra, pero con que el mismo contenido se lea del cache una sola vez, ya ahorrás. A partir del segundo hit, el ahorro se multiplica.
+Acá está una de las optimizaciones más grandes del sistema. La idea es simple: **el mismo contenido enviado dos veces no cuesta dos veces**. Anthropic cobra los tokens cacheados a un 10% del precio normal, descuento del 90% en los reads. El primer envío (cache write) cuesta un poquito más, 25% extra, pero con que el mismo contenido se lea del cache una sola vez, ya ahorrás. A partir del segundo hit, el ahorro se multiplica.
 
 ¿Qué significa esto en la práctica?
 
@@ -74,7 +74,7 @@ Acá está una de las palancas más grandes del sistema. La idea es simple: **el
 
 Una app típica con system prompt estable y volumen alto, con caching bien activado, puede llegar al **88 a 95% de ahorro** respecto al precio sin cache. Es la diferencia entre tener una factura razonable y una factura que duele.
 
-El detalle implementacional (cómo activar cada modo, cómo verificás que el cache está pegando, qué pasa en Bedrock y Vertex) está en la documentación técnica del proyecto, sección 5.1.
+El detalle implementacional (cómo activar cada modo, cómo verificás que el cache está pegando, qué pasa en Bedrock y Vertex) está en la documentación técnica del proyecto, sección 5.1 (Link al documento técnico).
 
 ### "Mi sesión no es tan larga"
 
@@ -92,7 +92,7 @@ Una llamada con 2.000 tokens de thinking y 500 de output cuesta **5x más** que 
 
 ### "Tenemos Microsoft Enterprise Agreement, ya tenemos descuento"
 
-Lo tenemos. Es del **15 a 25%**, y con MACC sube a **23 a 28%**. Pero ese descuento aplica sobre el consumo Azure, no sobre la API directa. Y Azure sobre OpenAI directo tiene un **overhead de 15 a 40% en TCO**.
+Lo tenemos. El EA (Enterprise Agreement, el contrato marco corporativo con Microsoft) negocia un descuento del **15 a 25%**, y con MACC (Microsoft Azure Consumption Commitment, el compromiso plurianual de gasto en Azure que habilita descuentos adicionales) sube a **23 a 28%**. Pero ese descuento aplica sobre el consumo Azure, no sobre la API directa. Y Azure sobre OpenAI directo tiene un overhead de **15 a 40% en TCO** (Total Cost of Ownership, el costo real total sumando support, egress, monitoring y todo lo que no figura en la pricing page).
 
 Hagamos la cuenta. Descuento del 25% sobre un servicio que tiene 30% de overhead sobre la alternativa directa. El "descuento" desaparece. No es que el EA no sirva, sirve, pero no como ahorro automático. Sirve como compliance, data residency y consolidación de factura. Y eso, para empresas europeas con GDPR encima como las de Visma, **es exactamente lo que estamos comprando.** Pagamos hyperscaler por seguridad jurídica, no por precio.
 
@@ -110,19 +110,34 @@ Esto ya está. No es futuro. La pregunta no es "¿llegarán modelos más baratos
 
 ## "Pero antes de cobrarme, ¿no me avisa? ¿No se bloquea solo?"
 
-Esta es la pregunta más importante del artículo, y la que más gente me hizo. La respuesta corta es: **depende. Y la mayoría de las veces, no se bloquea solo.**
+Esta es la pregunta más importante del artículo, y la que más gente me hizo. La respuesta corta, después de revisarla con cuidado, es: **por default no te explotan la factura. Pero la diferencia entre "no te explotan" y "te alcanza el presupuesto" depende de cómo configures cada herramienta.**
 
-Cada herramienta funciona distinto. GitHub Copilot bajo el nuevo billing no tiene stopper por default, el overage se factura sin límite a menos que el admin de la organización configure un spending limit. Anthropic API directa lo mismo: cobra hasta que llegue el límite de la tarjeta o el workspace limit que vos hayas configurado. OpenAI API igual. Azure OpenAI y Bedrock van directo a la factura cloud, sin tope, salvo que armes budget alerts. Cursor permite "additional usage" si lo activás. Solo los planes Claude Desktop/Code te cortan cuando se acaba la cuota mensual.
+Acá hay un mito que conviene desarmar primero. La imagen mental de "te cobran sin límite hasta que te llega un susto a fin de mes" es exagerada. La realidad es más matizada. Casi todas las herramientas tienen alguno de estos tres mecanismos:
 
-Lo que hay que hacer con esto **no es una receta uniforme**. Cada BU de Visma tiene su mix de proveedores, sus planes, sus convenios con corporate. Es un ejercicio de **revisar y configurar**:
+1. **Rate limit del proveedor.** Un techo duro de requests o tokens por minuto que el vendor te aplica por default. No lo configurás vos. Te frena antes de cualquier explosión, devolviéndote un error tipo "rate limit exceeded".
+2. **Cuota del plan.** Lo que pagaste te da X consumo. Cuando se acaba, te devuelve "limit reached" y tenés que esperar al reset (mensual típicamente) o pagar más.
+3. **Spending limit configurable.** Vos definís cuánto estás dispuesto a gastar arriba del plan. Si lo dejás en cero (el default razonable), no hay overage. Si lo subís, ahí empieza a haber riesgo controlado por vos.
 
-- **Revisá tu situación específica.** ¿Qué herramientas usás? ¿Bajo qué plan? ¿El convenio con Visma corporate cubre todo o algunos seats están fuera? ¿El billing está centralizado o cada equipo paga aparte? Esa información determina dónde tenés que ir a poner un límite, y a veces revela que no tenés permisos para hacerlo vos, que la conversación es con IT o con el admin de la organización.
-- **Configurá lo que corresponda a tu situación.** Si la herramienta soporta spending limit y aplica a tu caso, ponelo. Si soporta alertas de budget, configuralas. Si no soporta ninguna de las dos, asegurate de que alguien esté mirando la trayectoria del consumo manualmente. Lo importante no es que todos hagan exactamente lo mismo, es que **nadie esté operando con default = "sin tope"** sin saberlo.
-- **Revisá de nuevo en un mes.** Las herramientas cambian settings, los planes se actualizan, los contratos se renegocian. El stopper no es un evento, es una práctica.
+**Cómo se comporta cada herramienta por default:**
 
-Una nota sobre cómo leer esto: **el stopper no es una solución, es una alarma de incendio.** Si tu factura llega al tope, algo se rompió antes. La pregunta no es "¿cuándo nos cortan?", es "¿quién está mirando la trayectoria y avisando antes de que el tope se acerque?". Si nadie tiene ese rol explícito en tu BU, ese es el primer puesto que hay que crear o asignar. No es un rol full-time, son 2 horas al mes mirando un dashboard. Pero tiene que ser de alguien.
+- **Claude Pro / Team / Enterprise (Desktop, Code, Cowork):** te corta limpio cuando se acaba la cuota del plan. No hay overage. Esperás al reset o subís de plan.
+- **Cursor:** mismo modelo. Tope por plan. Si querés overage tenés que activarlo explícitamente desde settings de la org.
+- **GitHub Copilot bajo el nuevo billing:** trae AI Credits incluidos en el seat. Cuando se acaban, lo que pase depende del **spending limit** de la organización. Por default suele venir en cero (corta y listo). Si el admin lo subió, consume hasta ese tope y después corta.
+- **Anthropic API directa:** tu workspace tiene un **monthly spend limit** configurable desde la consola. Mientras no lo toques, hay un valor por default (no es infinito). Cuando lo alcanzás, te devuelve error. Aparte de eso, los rate limits por minuto te paran cualquier corrida descontrolada antes de que la factura crezca.
+- **OpenAI API directa:** mismo modelo. Dashboard de Settings → Limits trae un **monthly budget** y alertas configurables.
+- **Azure OpenAI / AWS Bedrock:** acá es donde hay que poner más atención. La factura va al cloud account general. No es "canilla libre" (los rate limits del modelo y las cuotas del subscription te frenan antes), pero sí podés terminar pagando más de lo previsto si no configuraste **budget alerts** en Azure Cost Management o en AWS Budgets. La buena práctica es siempre configurarlos.
 
-Dónde mirar exactamente en cada plataforma (rutas de la consola, settings, formato de los budget alerts) está en la documentación técnica del proyecto, sección 8.3.
+**La verdad operativa entonces es esta:** ningún proveedor serio te factura silenciosamente sin avisar. Lo que sí pasa es que **el tope por default puede no coincidir con tu presupuesto real**. Por eso el ejercicio es revisar, no entrar en pánico.
+
+Lo que hay que hacer **no es una receta uniforme**. Cada BU de Visma tiene su mix de proveedores, sus planes, sus convenios con corporate. Es un ejercicio de revisar y configurar:
+
+- **Revisá tu situación específica.** ¿Qué herramientas usás? ¿Bajo qué plan? ¿El billing está centralizado en una organización o cada equipo paga aparte? Esa información determina dónde tenés que ir a ver, y a veces revela que la conversación es con IT o con el admin de la organización, no algo que vos toques directo.
+- **Confirmá el comportamiento en tu caso.** En cada consola, mirá: ¿el plan corta solo cuando se acaba la cuota o permite overage? ¿Hay spending limit configurado? ¿Hay alertas de budget? El default razonable es: cuota dura por plan, sin overage. Si querés overage para no quedarte sin servicio a mitad de mes, activalo con un tope explícito que tenga sentido para tu presupuesto.
+- **Revisá de nuevo en un mes.** Las herramientas cambian settings, los planes se actualizan, los contratos se renegocian.
+
+Este artículo no te viene a decir "te van a hacer mierda la factura". Te viene a decir lo contrario: **usá bien tus tokens así te alcanza con lo que ya pagás**. Y si en algún caso decidís abrir overage porque no querés quedarte sin servicio en una semana crítica, que sea una decisión consciente, con un tope, y sabiendo cuánto estás dispuesto a poner. La canilla no está abierta sola, pero podés abrirla vos sin querer si no mirás.
+
+Dónde encontrar cada setting en cada plataforma (rutas de la consola, formato de los budget alerts, valores recomendados) está en la documentación técnica del proyecto, sección 8.3 (Link al documento técnico).
 
 ---
 
@@ -140,29 +155,34 @@ Antes de entrar en cómo, una corrección importante a algo que se dice mucho. L
 
 Herramientas que sí exponen OpenTelemetry hoy:
 
-- **Claude Code:** soporte oficial. Cinco variables de entorno en tu shell y empieza a exportar métricas y eventos a cualquier backend OTLP.
+- **Claude Code:** soporte oficial. Cinco variables de entorno en tu shell y empieza a exportar métricas y eventos a cualquier backend OTLP, incluyendo un archivo local en tu propia máquina.
 - **Claude Cowork (Claude Desktop) en planes Team y Enterprise** desde la versión 1.1.4173 en adelante.
-- **GitHub Copilot Chat:** settings nativos en VSCode. Exporta traces, métricas y eventos siguiendo GenAI Semantic Conventions (un estándar abierto del propio OpenTelemetry).
+- **GitHub Copilot Chat:** settings nativos en VSCode. Exporta traces, métricas y eventos siguiendo GenAI Semantic Conventions (un estándar abierto del propio OpenTelemetry). Soporta también exportar a archivo local.
 - **Codex CLI (OpenAI):** exporta logs estructurados y métricas OTel.
 
 La que todavía no lo expone de forma nativa es **Cursor**. Tiene Admin Dashboard con API propia y exports CSV en Enterprise, pero no OTel out-of-the-box. Si te urge, hay hooks de comunidad (cursor-otel-hook, CursorLens como proxy) que cierran el gap.
 
-La regla actualizada: antes de adoptar o profundizar en una herramienta de IA, preguntá si expone OTel. Si lo hace, podés tener observabilidad de grado enterprise sin necesidad de migrar nada a API directa. Si no lo hace, tu visibilidad va a depender del dashboard del vendor.
+La regla actualizada: antes de adoptar o profundizar en una herramienta de IA, preguntá si expone OTel. Si lo hace, podés tener observabilidad real sin necesidad de migrar nada a API directa. Si no lo hace, tu visibilidad va a depender del dashboard del vendor.
 
-### Tu dashboard personal en diez minutos
+### Tu dashboard personal en diez minutos, todo en tu máquina
 
-Acá viene la parte concreta. Cualquier dev que use Claude Code o Copilot puede armarse su propio dashboard de consumo en **diez minutos**, sin pedirle nada a IT, sin pagar nada extra, sin abrir un ticket.
+Acá viene la parte concreta. Cualquier dev que use Claude Code o Copilot puede armarse su propio dashboard de consumo en diez minutos, **sin pedirle nada a IT, sin pagar nada extra, sin subir métricas a ningún servicio externo, sin abrir un ticket**.
 
-La idea es esta: las herramientas exportan telemetría OpenTelemetry. Vos necesitás un backend que la reciba y la grafique. Para uso personal hay dos caminos limpios:
+La idea es esta. Tanto Claude Code como Copilot Chat pueden exportar su telemetría a un archivo local en formato JSONL. Cada línea del archivo es un evento (una sesión, un request, tokens consumidos, modelo usado, costo estimado). Con eso ya tenés todo lo que necesitás para responder las preguntas de gobernanza personal: cuántas sesiones por día, cuánto contexto repetido, qué modelos, cuántos tokens fueron input vs output, cuánto te cuesta.
 
-- **Grafana Cloud** (free tier): te registrás gratis, te dan un endpoint OTLP, lo configurás en tu shell, y ya estás mandando métricas a un Grafana que vive en la nube. Mirás tu dashboard desde el browser. Cero infraestructura local.
-- **Aspire Dashboard local** (un solo container Docker): si preferís que nada salga de tu máquina, levantás el container de Aspire Dashboard que Microsoft publica gratis. Te da un trace viewer con endpoint OTLP built-in. Apuntás Claude Code ahí y listo.
+Lo único que falta es algo que lea ese archivo y te lo muestre lindo. Esto es **un script chico en Python que lee el JSONL, calcula las agregaciones, y genera un HTML estático con gráficos**. Abrís el HTML en el browser, mirás. Cero docker, cero cuenta cloud, cero servidor corriendo, cero compartir métricas con nadie.
 
-Una vez que el dashboard está vivo, las preguntas que podés contestar son exactamente las que importan para gobernanza personal: cuántas sesiones por día, cuánto contexto repetido estás reenviando, qué modelos disparaste y en qué proporción, cuántos tokens fueron input vs output, cuánto te cuesta cada día.
+El flujo, conceptualmente:
 
-Lo más interesante de esto: no son aproximaciones, son datos exactos sacados del propio CLI. Y vienen del vendor, no es algo construido por arriba.
+1. Setear las variables de entorno (Claude Code) o el setting JSON (Copilot Chat) para que exporten a un archivo local.
+2. Usar las herramientas normalmente durante una semana. El archivo se llena solo, sin que tengas que hacer nada.
+3. Correr el script Python (un comando: `python dashboard.py`) que lee el archivo, hace las cuentas, y escribe un `dashboard.html` en la misma carpeta.
+4. Abrir el HTML en el browser. Ver el consumo del último período.
+5. Repetir cuando quieras una foto actualizada.
 
-Si esto te enganchó, el cómo exacto está en la documentación técnica del proyecto, sección 9.6: las variables de entorno textuales para Claude Code, el JSON de settings para Copilot Chat, los pasos para levantar Grafana Cloud o Aspire Dashboard, y cómo armar las queries para responder cada una de las preguntas de arriba.
+Lo más interesante de esto: las métricas no son aproximaciones, son datos exactos sacados del propio CLI. Y nunca salen de tu máquina. El archivo JSONL vive en tu disco, el script lo lee localmente, el HTML se genera localmente, lo mirás localmente.
+
+Si esto te enganchó, el cómo exacto está en la documentación técnica del proyecto, sección 9.6 (Link al documento técnico): las variables de entorno textuales para Claude Code, el JSON de settings para Copilot Chat, el script Python completo, y la plantilla HTML con los gráficos para responder cada una de las preguntas de gobernanza personal.
 
 ### Cuando no es para vos, es para tu app
 
@@ -198,11 +218,11 @@ Las empresas de Visma ya hicieron esa transición en cloud. No hay que reinventa
 
 Tres niveles. Cualquier BU de Visma puede arrancar por el primero esta misma semana. Cada nivel está cubierto en detalle en la documentación técnica del proyecto.
 
-**Cero esfuerzo (el lunes a la mañana).** Activar Auto Mode en Copilot. Activar la compresión de output del terminal en VSCode. Activar tool search para los MCPs. En Cursor, asegurarse de estar en Auto. En Claude Code, revisar que el archivo de contexto del proyecto no tenga 500 líneas. Revisar y configurar spending limits donde aplique en tu caso. Esto es el piso. Ahorro estimado combinado: **15 a 25%** sin tocar workflows. Todos los settings exactos están en la sección 4 del doc técnico.
+**Cero esfuerzo (el lunes a la mañana).** Activar Auto Mode en Copilot. Activar la compresión de output del terminal en VSCode. Activar tool search para los MCPs. En Cursor, asegurarse de estar en Auto. En Claude Code, revisar que el archivo de contexto del proyecto no tenga 500 líneas. Revisar y configurar spending limits donde aplique en tu caso. Esto es el piso. Ahorro estimado combinado: **15 a 25%** sin tocar workflows. Todos los settings exactos están en la sección 4 del doc técnico (Link al documento técnico).
 
-**Esfuerzo medio (un sprint).** Cada dev se arma su dashboard personal de OpenTelemetry (Claude Code o Copilot Chat, según qué use más). Si una BU tiene una app o feature que llama a una API de modelo, activar prompt caching. Migrar workflows asíncronos (reportes, clasificaciones nocturnas, embeddings, evaluación de prompts en CI) a Batch API: **50% de descuento sin diferencia de calidad**, combinable con caching para **hasta 95% de ahorro**. Instrumentar las llamadas con OpenTelemetry siguiendo GenAI Semantic Conventions. Ahorro estimado: **60 a 90%** en el costo de esa app específica. Cómo activar cada cosa: secciones 5 y 9 del doc técnico.
+**Esfuerzo medio (un sprint).** Cada dev se arma su dashboard personal con el script Python local (Claude Code o Copilot Chat, según qué use más). Si una BU tiene una app o feature que llama a una API de modelo, activar prompt caching. Migrar workflows asíncronos (reportes, clasificaciones nocturnas, embeddings, evaluación de prompts en CI) a Batch API: **50% de descuento sin diferencia de calidad**, combinable con caching para **hasta 95% de ahorro**. Instrumentar las llamadas con OpenTelemetry siguiendo GenAI Semantic Conventions. Ahorro estimado: **60 a 90%** en el costo de esa app específica. Cómo activar cada cosa: secciones 5 y 9 del doc técnico (Link al documento técnico).
 
-**Esfuerzo grande (un trimestre, decisión de arquitectura).** Routing multi-modelo: clasificación a Haiku, código y razonamiento estándar a Sonnet, decisiones complejas a Opus, batch y experimentos a DeepSeek directo (donde no haya tema de datos sensibles) o vía Azure (donde sí). RouteLLM o LiteLLM o Portkey como gateway. **Ahorro reportado: 20 a 80% del OpEx**, dependiendo del mix actual. Esto no es para todas las BUs, pero para las que ya tienen carga seria de IA en producción es la palanca grande. Secciones 6, 7 y 8 del doc técnico cubren los detalles.
+**Esfuerzo grande (un trimestre, decisión de arquitectura).** Routing multi-modelo: clasificación a Haiku, código y razonamiento estándar a Sonnet, decisiones complejas a Opus, batch y experimentos a DeepSeek directo (donde no haya tema de datos sensibles) o vía Azure (donde sí). RouteLLM o LiteLLM o Portkey como gateway. **Ahorro reportado: 20 a 80% del OpEx**, dependiendo del mix actual. Esto no es para todas las BUs, pero para las que ya tienen carga seria de IA en producción es el ajuste grande. Secciones 6, 7 y 8 del doc técnico cubren los detalles (Link al documento técnico).
 
 ---
 
@@ -220,7 +240,7 @@ Estas tres cosas dependen de cada empresa de Visma, y de cada persona dentro de 
 
 ## No es una receta. Es un momento.
 
-Quiero ser claro en algo antes de los pasos accionables: nada de lo que escribí acá es "la forma" de trabajar con IA. No estoy diciendo que todos tengan que tener un dashboard de Grafana, ni que todos tengan que migrar features a API directa, ni que todos tengan que hacer routing multi-modelo el viernes. Lo que digo es otra cosa.
+Quiero ser claro en algo antes de los pasos accionables: nada de lo que escribí acá es "la forma" de trabajar con IA. No estoy diciendo que todos tengan que tener un dashboard, ni que todos tengan que migrar features a API directa, ni que todos tengan que hacer routing multi-modelo el viernes. Lo que digo es otra cosa.
 
 **Esta es la forma de entender. Y entender, hoy, es lo que hay que hacer.**
 
@@ -236,9 +256,9 @@ Por eso este artículo. No para decirte qué hacer, sino para mostrarte por dón
 
 ## Qué hacer esta semana, por rol
 
-**Si sos developer.** Lunes: activar Auto Mode, compresión de output y tool search en VSCode. Martes a la tarde: armate tu dashboard personal de OpenTelemetry. Diez minutos, cero euros, te va a cambiar la vista. Miércoles: con el dashboard ya andando, mirá una sesión larga tuya y observá cuánto contexto está arrastrando, qué modelos usaste, cuántos tokens fueron output, qué hit rate de caching tenés. Viernes: si tu equipo tiene una feature con API propia, abrí el ticket para activar caching y para instrumentar las llamadas con OTel.
+**Si sos developer.** Lunes: activar Auto Mode, compresión de output y tool search en VSCode. Martes a la tarde: armate tu dashboard personal con el script local. Diez minutos, cero euros, te va a cambiar la vista. Miércoles: con el dashboard ya andando, mirá una sesión larga tuya y observá cuánto contexto está arrastrando, qué modelos usaste, cuántos tokens fueron output, qué hit rate de caching tenés. Viernes: si tu equipo tiene una feature con API propia, abrí el ticket para activar caching y para instrumentar las llamadas con OTel.
 
-**Si sos tech lead.** Lunes: revisá qué herramientas usa tu BU y dónde aplican spending limits. Configurá lo que corresponda en tu caso. Martes: contale al equipo cómo armarse el dashboard personal. La gobernanza colectiva empieza por la individual. Miércoles: hacé una hora con el equipo para decidir en qué punto del espectro (productos cerrados, herramientas con configuración, API directa) están parados los distintos casos de uso. Viernes: si tenés algo en API sin OpenTelemetry, ponelo en el roadmap del próximo sprint.
+**Si sos tech lead.** Lunes: revisá qué herramientas usa tu BU y dónde aplican spending limits. Confirmá que ninguna está operando con default = "sin tope" sin saberlo. Martes: contale al equipo cómo armarse el dashboard personal. La gobernanza colectiva empieza por la individual. Miércoles: hacé una hora con el equipo para decidir en qué punto del espectro (productos cerrados, herramientas con configuración, API directa) están parados los distintos casos de uso. Viernes: si tenés algo en API sin OpenTelemetry, ponelo en el roadmap del próximo sprint.
 
 **Si tomás decisiones de presupuesto en una BU.** Lunes: pedí el dashboard de uso de los últimos 90 días por herramienta. Miércoles: identificá quién es el responsable nombrado de mirar la trayectoria mensual. Si nadie, asignalo. Viernes: agendá la conversación con finance para mostrarle el cambio de junio antes de que ellos te lo pregunten en julio.
 
@@ -250,6 +270,6 @@ Por eso este artículo. No para decirte qué hacer, sino para mostrarte por dón
 
 ## Para profundizar
 
-Cada uno de los puntos técnicos mencionados en este artículo (prompt caching, OpenTelemetry, Batch API, routing multi-modelo, spending limits por vendor, dashboards personales, observabilidad enterprise) está cubierto en detalle en la **documentación técnica del proyecto**: `PRODV2/doc-tecnico-final.md`. Ahí vas a encontrar los snippets exactos, las variables de entorno textuales, los settings de IDE, las queries de PromQL para los dashboards, las matrices de decisión de procurement, y la referencia completa de métricas verificadas con sus fuentes originales.
+Cada uno de los puntos técnicos mencionados en este artículo (prompt caching, OpenTelemetry, Batch API, routing multi-modelo, spending limits por vendor, dashboards personales con script local, observabilidad enterprise) está cubierto en detalle en la **documentación técnica del proyecto** (Link al documento técnico). Ahí vas a encontrar los snippets exactos, las variables de entorno textuales, los settings de IDE, el script Python completo del dashboard personal, las matrices de decisión de procurement, y la referencia completa de métricas verificadas con sus fuentes originales.
 
-La idea es que este artículo te ayude a entender **qué pasa, por qué, y dónde están las palancas**. La documentación técnica te ayuda a **implementarlas en tu caso específico**. Las dos lecturas son complementarias: la una sin la otra queda incompleta.
+La idea es que este artículo te ayude a entender **qué pasa, por qué, y dónde están los puntos de optimización**. La documentación técnica te ayuda a **implementarlas en tu caso específico**. Las dos lecturas son complementarias: la una sin la otra queda incompleta.
