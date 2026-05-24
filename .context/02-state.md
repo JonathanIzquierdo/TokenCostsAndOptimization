@@ -1,14 +1,16 @@
 # 02 — Estado Vivo
 
 > **Este es el único archivo del repo que cambia entre sesiones.** Actualizalo al cerrar cualquier sesión donde hayas trabajado. La próxima sesión depende de esto.
+>
+> Para arranque rápido al retomar, leer primero `.context/QUICK-START.md`. Este archivo es el log detallado.
 
 ---
 
 ## Última actualización
 
-**Fecha:** 21 mayo 2026
-**Por:** Opus 4.7 — creación de carpeta PRODV2 con copia del v2 + documento nuevo sobre hyperscaler discount vs overhead + caso GDPR/DeepSeek vía Azure
-**Trigger:** Pedido del usuario de empezar a consolidar entregables finales en PRODV2 y producir un documento standalone sobre por qué el descuento del 25% del EA no se traduce en ahorro real, salvo en el caso compliance + DeepSeek
+**Fecha:** 24 mayo 2026
+**Por:** Opus 4.7 — cierre de jornada con 6 archivos finales en PRODV2 (3 ES + 3 EN) y creación de QUICK-START.md
+**Trigger:** Pedido del usuario de dejar todo listo para retomar mañana con el menor consumo de tokens posible
 
 ---
 
@@ -16,17 +18,20 @@
 
 | Entregable | Idioma | Archivo | Estado |
 |------------|--------|---------|--------|
-| Artículo | ES | `PROD/article-draft-v1.md` | Borrador v1 — pendiente review |
-| Artículo | EN | `PROD/article-draft-v1-EN.md` | Borrador v1 — pendiente review |
-| Documentación técnica | ES | `PROD/technical-docs-draft-v1.md` | Borrador v1 — pendiente review |
-| Documentación técnica | EN | `PROD/technical-docs-draft-v1-EN.md` | Borrador v1 — pendiente review |
-| Documentación técnica v2 | ES | `PROD/technical-docs-draft-v2.md` | Versión expandida — replicada en PRODV2 |
-| **Documentación técnica v2 (final)** | **ES** | **`PRODV2/technical-docs-draft-v2.md`** | **Copia 1:1 desde PROD/ — base de entregable final** |
-| **Hyperscaler discount vs GDPR/DeepSeek** | **ES** | **`PRODV2/hyperscaler-discount-vs-gdpr-ES.md`** | **Nuevo, standalone, ~5.300 palabras, todas las cifras con URL a fuente** |
-| Índice ejecutivo (para Jonathan) | ES | `PROD/JON.md` | Listo |
-| Índice ejecutivo (para Jonathan) | EN | `PROD/JON-EN.md` | Listo |
-| Brief para Claude Design | ES | `PROD/claude-design-brief-ES.md` | Listo |
-| Brief para Claude Design | EN | `PROD/claude-design-brief-EN.md` | Listo |
+| **Artículo largo** | **ES** | `PRODV2/articulo-final.md` | ✅ FINAL — 34,5 KB |
+| **Artículo corto** | **ES** | `PRODV2/articulo-final-short.md` | ✅ FINAL — 14,3 KB |
+| **Doc técnico** | **ES** | `PRODV2/doc-tecnico-final.md` | ✅ FINAL — 120 KB con script Python + HTML para dashboard personal |
+| **Artículo largo** | **EN** | `PRODV2/EN/articulo-final-EN.md` | ✅ FINAL — 34,7 KB |
+| **Artículo corto** | **EN** | `PRODV2/EN/articulo-final-short-EN.md` | ✅ FINAL — 14,3 KB |
+| **Doc técnico** | **EN** | `PRODV2/EN/doc-tecnico-final-EN.md` | ✅ FINAL — 115,5 KB |
+| Artículo v1 (histórico) | ES | `PROD/article-draft-v1.md` | Obsoleto, no tocar |
+| Artículo v1 (histórico) | EN | `PROD/article-draft-v1-EN.md` | Obsoleto, no tocar |
+| Doc técnico v1 (histórico) | ES | `PROD/technical-docs-draft-v1.md` | Obsoleto |
+| Doc técnico v1 (histórico) | EN | `PROD/technical-docs-draft-v1-EN.md` | Obsoleto |
+| Doc técnico v2 (histórico) | ES | `PROD/technical-docs-draft-v2.md` | Obsoleto, reemplazado por `PRODV2/doc-tecnico-final.md` |
+| Documento standalone procurement | ES | `PRODV2/hyperscaler-discount-vs-gdpr-ES.md` | Existe, contenido absorbido por sección 3 del técnico final |
+| Índice ejecutivo JON | ES/EN | `PROD/JON.md` / `JON-EN.md` | Pendiente actualizar si se quiere referenciar PRODV2 |
+| Brief Claude Design | ES/EN | `PROD/claude-design-brief-ES.md` / `EN.md` | Sin cambios |
 
 ---
 
@@ -34,39 +39,32 @@
 
 | Archivo | Estado |
 |---------|--------|
-| `research/01-context-and-token-waste.md` | ✅ Completo |
-| `research/02-model-selection.md` | ✅ Completo |
-| `research/03-prompt-caching.md` | ✅ Completo |
-| `research/04-model-routing.md` | ✅ Completo |
-| `research/05-copilot-billing.md` | ✅ Completo |
-| `research/06-vscode-tools.md` | ✅ Completo |
-| `research/07-azure-deepseek.md` | ✅ Completo (ampliado con datos de noviembre 2025 sobre eliminación Level B/C/D en el nuevo doc PRODV2) |
-| `research/08-batch-and-compaction.md` | ✅ Completo |
-| `research/09-extended-thinking-costs.md` | ✅ Completo |
-| `data/verified-metrics.md` | ⚠️ Pendiente: agregar las cifras nuevas verificadas en sesión 21 mayo (eliminación Level A-D, caso real overhead 55% Inference.net, casos Foundry trap específicos) |
-| `article/outline.md` | ✅ Aprobado |
+| `research/01..09` | ✅ Completo |
+| `data/verified-metrics.md` | ✅ Sirvió de fuente, no se modificó en esta sesión |
+| `article/outline.md` | ✅ Aprobado (referencia histórica) |
 
 ---
 
 ## PRÓXIMO PASO CONCRETO
 
-**Acción inmediata recomendada (a elegir):**
-
-**Opción A — Consolidar entregables en PRODV2.** Replicar también en PRODV2 los archivos finales que el usuario quiera mantener como "versión final": artículo (ES/EN), index ejecutivo JON.md, briefs de diseño. El criterio: PRODV2 es la carpeta de entregables aprobados; PROD se mantiene como working/draft.
-
-**Opción B — Sincronizar `data/verified-metrics.md`.** Las cifras nuevas verificadas en esta sesión (eliminación Level A-D Microsoft nov 2025, caso 55% overhead Inference.net, caso $13K USD Foundry trap) están citadas en `PRODV2/hyperscaler-discount-vs-gdpr-ES.md` con URL pero todavía no están agregadas a la fuente de verdad central. Regla #1 del proyecto: ningún número sin fuente verificada en verified-metrics → conviene mover esas filas allí.
-
-**Opción C — Producir versión EN del nuevo documento.** El doc nuevo está sólo en ES; si se quiere distribuir internacionalmente, generar `PRODV2/hyperscaler-discount-vs-gdpr-EN.md` siguiendo el mismo nivel de detalle y manteniendo los links a fuente.
-
-**Sugerencia de orden:** primero B (mantener la regla #1 del proyecto), después A (consolidar PRODV2 completo), después C (versión EN cuando el contenido ES esté aprobado por Jonathan).
+No hay próximo paso obligatorio. La jornada del 24 cerró todos los entregables que el usuario pidió. Mañana al retomar, opciones sugeridas en `.context/QUICK-START.md` sección "POSIBLES PRÓXIMOS PASOS". El usuario decide al inicio de la próxima sesión.
 
 ---
 
-## Decisiones pendientes
+## Decisiones cerradas en esta jornada (24 mayo 2026)
 
-- ¿Cuál es exactamente el criterio para "qué va a PRODV2"? La sesión actual asumió: copia del v2 (entregable final) + documento standalone nuevo. Conviene confirmar si:
-  - el v1 también se considera entregable final (en cuyo caso también a PRODV2), o si v1 queda obsoleto.
-  - el artículo storytelling (PROD/article-draft-v1.md) también es entregable final post-review, o si solo v2 lo es.
+Documentadas en detalle en `.context/QUICK-START.md` sección "DECISIONES EDITORIALES QUE YA ESTÁN APLICADAS". Resumen:
+
+1. Sin guiones largos en ningún texto generado.
+2. Palabra "palanca" reemplazada por ajuste/optimización/control en todo el material.
+3. Glosas inline de siglas (BU, MACC, EA, TCO, MDM, JSONL, ZDR, RAG, OTel, BYOK) la primera vez que aparecen.
+4. Sección stoppers reescrita: ningún vendor explota la factura por default.
+5. Gobernanza personal en 9.6 del técnico ahora es script Python local + HTML estático con Chart.js. Camino principal sin docker, sin cuenta cloud, sin nada saliendo de la máquina.
+6. Espectro de 3 niveles: productos cerrados / herramientas con configuración / API directa.
+7. Placeholders `(Link al documento técnico)` y `(Link al artículo extendido)` para links cruzados, los reemplaza el usuario después.
+8. Frase guía traducida como "Spend well, not spend less".
+9. Versión corta del artículo creada (~14 KB) fusionando 6 objeciones en 3, sacando paralelismo AWS y "Lo que no te puede arreglar".
+10. Carpeta `PRODV2/EN/` creada con los 3 archivos traducidos al inglés profesional conversacional, manteniendo terminología técnica en inglés tal cual.
 
 ---
 
@@ -83,8 +81,9 @@ Ninguno.
 | 19 may 2026 | Opus 4.6 | Investigación completa (9 temas), `verified-metrics.md`, outline aprobado, primer push al repo, primeras instrucciones |
 | 19 may 2026 | Opus 4.6 | Borradores v1 de artículo + documentación técnica (ES + EN), briefs de diseño, índices JON.md |
 | (sesión Haiku) | Haiku | ⚠️ El modelo no logró retomar contexto. Trigger del rediseño actual. |
-| 21 may 2026 | Opus 4.7 | Rediseño de ingeniería de contexto |
-| 21 may 2026 | Opus 4.7 | Creación de PRODV2: copia v2 + documento standalone "hyperscaler-discount-vs-gdpr-ES.md" sobre por qué el 25% no se traduce en ahorro + caso DeepSeek/GDPR. Búsquedas web confirmaron eliminación Level A-D nov 2025, ban Garante DeepSeek enero 2025, disponibilidad DeepSeek en Azure AI Foundry EU desde feb 2026 |
+| 21 may 2026 | Opus 4.7 | Rediseño de ingeniería de contexto (.context/ creado) |
+| 21 may 2026 | Opus 4.7 | Creación de PRODV2: copia v2 + documento standalone hyperscaler-discount-vs-gdpr-ES.md |
+| **24 may 2026** | **Opus 4.7** | **Jornada larga: análisis de Examples, iteración sobre artículo y técnico v1-v2-v3, decisión de separar en par articulo-final/doc-tecnico-final. Tres ajustes editoriales (sin em-dashes, palabra palanca, espectro renombrado). Reescritura completa de sección stoppers y de gobernanza personal con script Python local + HTML. Glosa de siglas inline incluida JSONL. Versión short del artículo creada (~14 KB). Traducción completa al inglés de los 3 archivos en `PRODV2/EN/`. Cierre con creación de QUICK-START.md y actualización de CLAUDE.md y este archivo para arranque rápido mañana.** |
 
 ---
 
@@ -97,3 +96,4 @@ Al cerrar una sesión donde hayas trabajado:
 3. Si hay un nuevo próximo paso, actualizar la sección "PRÓXIMO PASO CONCRETO"
 4. Agregar una línea a "Sesiones anteriores"
 5. Commit con mensaje claro: `state: [qué se hizo en una línea]`
+6. Si las decisiones editoriales cambian, sincronizar también `.context/QUICK-START.md`
