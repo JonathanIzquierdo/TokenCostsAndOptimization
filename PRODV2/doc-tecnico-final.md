@@ -23,7 +23,7 @@ Cada bloque de código está etiquetado con la **capa** en la que vive (de la 1 
 ### Índice
 
 1. [Fundamentos](#1-fundamentos)
-2. [Dónde vive cada palanca de optimización](#2-donde-vive)
+2. [Dónde vive cada optimización](#2-donde-vive)
 3. [Vendor directo vs hyperscaler: la decisión de procurement](#3-procurement)
 4. [Nivel 0: configuraciones inmediatas](#4-nivel-0)
 5. [Nivel 1: arquitectura de contexto](#5-nivel-1)
@@ -61,7 +61,7 @@ Toda llamada a un LLM se factura en tres bloques principales que conviene distin
 
 - **Input tokens.** Todo lo que el modelo recibe para procesar: system prompt (instrucciones generales del asistente), historial de la conversación, definiciones de herramientas (tools), documentos adjuntos y el mensaje del usuario. Es la parte "barata" del precio, pero también la que crece sin control si no se gobierna.
 - **Output tokens.** Lo que el modelo genera: la respuesta visible al usuario, el razonamiento interno (extended thinking) y las tool calls. **Cuestan típicamente 5x más que los input tokens.** Esto significa que limitar la longitud de la respuesta tiene un impacto desproporcionado en la factura.
-- **Cache reads.** Cuando reutilizás un prompt o un bloque grande de contexto vía prompt caching, las lecturas de cache se cobran al **10% del precio normal de input**. Es el descuento más grande que ofrece la plataforma, y la palanca individual con mayor impacto en aplicaciones que reutilizan contexto (RAG, agentes, asistentes con base de conocimiento).
+- **Cache reads.** Cuando reutilizás un prompt o un bloque grande de contexto vía prompt caching, las lecturas de cache se cobran al **10% del precio normal de input**. Es el descuento más grande que ofrece la plataforma, y la optimización individual con mayor impacto en aplicaciones que reutilizan contexto (RAG, agentes, asistentes con base de conocimiento).
 
 La asimetría 1x input, 5x output, 0.1x cache es la regla mental más útil para diseñar prompts: vale la pena pagar más en input estructurado y cacheable, a cambio de minimizar output libre.
 
@@ -142,22 +142,22 @@ Fuente: [PECollective, 2026](https://pecollective.com/tools/anthropic-api-pricin
 
 ---
 
-## 2. Dónde vive cada palanca de optimización <a id="2-donde-vive"></a>
+## 2. Dónde vive cada optimización <a id="2-donde-vive"></a>
 
-Esta es probablemente la sección más importante del documento, porque resuelve un problema que casi todos los equipos sufren al empezar: **buscar la palanca en el lugar equivocado**. Hay un patrón muy frecuente: un dev intenta optimizar desde un settings del IDE algo que solo se puede configurar en el código de la aplicación, o un líder pide "activar caching para todos" cuando los usuarios consumen IA a través de un producto cerrado donde no existe esa opción.
+Esta es probablemente la sección más importante del documento, porque resuelve un problema que casi todos los equipos sufren al empezar: **buscar la optimización en el lugar equivocado**. Hay un patrón muy frecuente: un dev intenta optimizar desde un settings del IDE algo que solo se puede configurar en el código de la aplicación, o un líder pide "activar caching para todos" cuando los usuarios consumen IA a través de un producto cerrado donde no existe esa opción.
 
 Para evitar esa confusión, conviene mapear con precisión los lugares físicos donde se toca optimización. Son cuatro, y cada uno tiene una audiencia distinta, sus propios parámetros y su propio techo de impacto.
 
 ### 2.1 Las cuatro capas de control
 
-| Capa | Lugar físico | Quién lo toca | Palancas que viven aquí | Techo de ahorro |
+| Capa | Lugar físico | Quién lo toca | Optimizaciones que viven aquí | Techo de ahorro |
 |------|---------------|----------------|---------------------------|-------------------|
 | **Capa 1** | Código de aplicación (Python/JS/etc) que llama directo a la API | Developers que construyen apps internas con LLM | Prompt caching, thinking budgets, max_tokens, modelo por tarea, batch API, output budgets, headers de beta | **Hasta 95% combinado** |
-| **Capa 2** | Settings de IDE (VSCode, Copilot, Claude Code, Cursor) | Cualquier dev individual o admin vía MDM | Auto Mode, compressOutput, tool search, debug panels, OTel local | **Hasta 30% combinado** |
+| **Capa 2** | Settings de IDE (VSCode, Copilot, Claude Code, Cursor) | Cualquier dev individual o admin vía MDM (Mobile Device Management, distribución centralizada de configuraciones) | Auto Mode, compressOutput, tool search, debug panels, OTel local | **Hasta 30% combinado** |
 | **Capa 3** | Consola de billing / admin de plataforma | Lead técnico, admin del tenant | Modelos permitidos/bloqueados, presupuestos por workspace, alertas, audit logs | **Indirecto: gobernanza** |
 | **Capa 4** | Gateway / routing layer (LiteLLM, Portkey, OpenRouter, RouteLLM) | Plataforma / infra | Routing automático entre modelos, fallbacks, retries, presupuestos por equipo, guardrails | **20 a 80% según [IDC](https://www.infoworld.com/article/4164236/github-shifts-copilot-to-usage-based-billing)** |
 
-Cómo leer esta tabla: si tu equipo solo tiene developers usando productos cerrados (Copilot, Cursor), la mayor parte de tu ahorro va a venir de Capa 2 (configurar bien el IDE) y de gobernanza de licencias en Capa 3. Si tu equipo construye apps que llaman directo a la API, las palancas más fuertes están en Capa 1 (caching, batch, asignación de modelo), y eventualmente Capa 4 cuando hay varios servicios y necesitás centralizar gobierno.
+Cómo leer esta tabla: si tu equipo solo tiene developers usando productos cerrados (Copilot, Cursor), la mayor parte de tu ahorro va a venir de Capa 2 (configurar bien el IDE) y de gobernanza de licencias en Capa 3. Si tu equipo construye apps que llaman directo a la API, las optimizaciones más fuertes están en Capa 1 (caching, batch, asignación de modelo), y eventualmente Capa 4 cuando hay varios servicios y necesitás centralizar gobierno.
 
 ### 2.2 El espectro: productos cerrados, herramientas con configuración, API directa
 
@@ -167,9 +167,9 @@ Antes de discutir las cuatro capas hay una distinción anterior, conceptual, que
 
 **Herramientas con configuración.** Productos enterprise o IDEs con visibilidad, model picker, telemetría OpenTelemetry y settings ricos. Ejemplos: Copilot en VSCode/Visual Studio, Claude Code, Claude Cowork en planes Team/Enterprise. Tenés acceso a Capa 2 (settings del IDE) y a una parte de Capa 3 (consola del producto). El caching lo hace la herramienta por vos. Cursor está en este grupo pero todavía no expone OTel nativo, tiene Admin Dashboard con API propia y exports CSV en Enterprise, y hay hooks de comunidad (cursor-otel-hook, CursorLens) que cierran el gap. Techo realista de ahorro: ~30% sobre consumo no optimizado.
 
-**API directa.** Vos escribís el código que llama al modelo. Ejemplos: Anthropic API directa, OpenAI API, AWS Bedrock, Google Vertex, Azure OpenAI. Tenés acceso a las cuatro capas. Las palancas grandes (caching 90%, batch 50%, routing 20 a 80%) viven en Capa 1 y Capa 4. Techo realista de ahorro: más del 90%.
+**API directa.** Vos escribís el código que llama al modelo. Ejemplos: Anthropic API directa, OpenAI API, AWS Bedrock, Google Vertex, Azure OpenAI. Tenés acceso a las cuatro capas. Las optimizaciones grandes (caching 90%, batch 50%, routing 20 a 80%) viven en Capa 1 y Capa 4. Techo realista de ahorro: más del 90%.
 
-**Una BU puede estar en los tres niveles simultáneamente.** Herramientas con configuración para que los devs usen Copilot, API directa para una feature de producto que llama LLM por debajo, y quizás algún equipo usando ChatGPT consumer informalmente. Eso no es problema, es la realidad. Lo que importa es saber **en qué nivel está cada caso de uso** y no asumir que todo lo que no es API directa es un producto cerrado.
+**Una BU (Business Unit, unidad de negocio dentro de Visma) puede estar en los tres niveles simultáneamente.** Herramientas con configuración para que los devs usen Copilot, API directa para una feature de producto que llama LLM por debajo, y quizás algún equipo usando ChatGPT consumer informalmente. Eso no es problema, es la realidad. Lo que importa es saber **en qué nivel está cada caso de uso** y no asumir que todo lo que no es API directa es un producto cerrado.
 
 La regla simple para diseñar nuevas implementaciones:
 - **Herramientas con configuración para uso humano** (un dev escribiendo código, alguien explorando ideas).
@@ -177,7 +177,7 @@ La regla simple para diseñar nuevas implementaciones:
 
 Los productos cerrados son problema sobre todo cuando se usan para casos que ameritan otra cosa: si un equipo está usando ChatGPT consumer para tareas que requieren observabilidad, gobernanza o repetibilidad, ahí hay algo para revisar.
 
-**Este documento asume que estás construyendo, o yendo hacia ahí.** Las capas que siguen dan por sentado que tu equipo escribe código de aplicación contra una API o está evaluando hacerlo. Si hoy estás 100% en productos cerrados y querés bajar costos significativos, el paso anterior es subir al menos a una herramienta con configuración o construir un wrapper interno con API key. Recién a partir de ahí abren las palancas que valen la pena.
+**Este documento asume que estás construyendo, o yendo hacia ahí.** Las capas que siguen dan por sentado que tu equipo escribe código de aplicación contra una API o está evaluando hacerlo. Si hoy estás 100% en productos cerrados y querés bajar costos significativos, el paso anterior es subir al menos a una herramienta con configuración o construir un wrapper interno con API key. Recién a partir de ahí abren las optimizaciones que valen la pena.
 
 ### 2.3 Cómo se conecta cada script con su capa
 
@@ -224,7 +224,7 @@ Cuando se consume un LLM con API key, el costo total se compone de **tres elemen
 
 1. **Precio nominal por token.** Lo que figura en la pricing page del modelo. Es el número que todos miran primero y el que aparece en las propuestas comerciales.
 2. **Modificadores de request.** Caching, batch, long context, fast mode, data residency. Son factores multiplicativos (algunos hacen bajar el precio, otros lo suben) y dependen de cómo armás cada llamada.
-3. **Overhead del proveedor.** Support plans, data transfer (egress), hosting de fine-tuned models, monitoring infra, audit logging. Son **costos fijos o por uso adicionales** que el pricing nominal no captura.
+3. **Overhead del proveedor.** Support plans, data transfer (egress), hosting de fine-tuned models, monitoring infra, audit logging. Son **costos fijos o por uso adicionales** que el pricing nominal no captura. La suma de pricing nominal + overhead es lo que se conoce como **TCO (Total Cost of Ownership), el costo total real de operar el servicio**, sumando todo lo que no aparece en la pricing page.
 
 El precio nominal es donde la mayoría de las empresas comparan, y donde aparentemente "el hyperscaler con descuento gana". El overhead es donde la cuenta se da vuelta y muchas comparaciones se demuestran equivocadas después del primer mes de producción.
 
@@ -290,7 +290,7 @@ Este es probablemente el caso más sutil y más caro, porque a primera vista par
 
 > "Claude models in Azure AI Foundry are billed as third-party Marketplace items, meaning their usage is typically not eligible for Azure sponsorship or startup credits... This often results in charges being applied directly to the credit card on file even if you have a significant remaining credit balance."
 
-En castellano: **el consumo de Claude en Foundry no descuenta de tus Azure credits ni de tu MACC (Microsoft Azure Consumption Commitment).** Se va directo a la tarjeta de crédito asociada a la cuenta. Si tu plan de procurement asumía que el MACC absorbía el gasto en Claude, te vas a llevar una sorpresa.
+En castellano: **el consumo de Claude en Foundry no descuenta de tus Azure credits ni de tu MACC (Microsoft Azure Consumption Commitment, el compromiso plurianual de gasto en Azure que habilita descuentos por volumen).** Se va directo a la tarjeta de crédito asociada a la cuenta. Si tu plan de procurement asumía que el MACC absorbía el gasto en Claude, te vas a llevar una sorpresa.
 
 **Casos reales documentados** ([The Register / AZ365.ai](https://az365.ai/blog/claude-on-azure-the-marketplace-billing-trap/)):
 - Founder japonés (Leach): ¥237.081 (~$1.600 USD) cargados directo a tarjeta, con credits no aplicados.
@@ -306,7 +306,7 @@ Acá los datos verificados sobre qué descuentos efectivamente se logran en nego
 
 | Tipo de descuento | Rango documentado | Fuente |
 |--------------------|--------------------|---------|
-| Azure EA solo | 15 a 25% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
+| Azure EA solo (Enterprise Agreement, el contrato marco corporativo con Microsoft) | 15 a 25% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
 | Azure EA + MACC | 23 a 28% negociado | [Microsoft Negotiations](https://microsoftnegotiations.com/blog/github-copilot-enterprise-licensing) |
 | Anthropic Enterprise / volume | Disponible, custom | [CloudZero](https://www.cloudzero.com/blog/claude-pricing/) |
 | OpenAI Enterprise tier | Custom pricing | [Finout, OpenAI](https://www.finout.io/blog/openai-pricing-in-2026) |
@@ -490,15 +490,15 @@ La aritmética típica: **10 MCPs × 500 tokens promedio por definición = 5.000
 
 ## 5. Nivel 1: arquitectura de contexto <a id="5-nivel-1"></a>
 
-Mientras el Nivel 0 era todo configuración sobre productos cerrados, el Nivel 1 entra en el territorio donde se gana de verdad: **el diseño del contexto que mandás al modelo en cada request**. Tres palancas, todas en Capa 1:
+Mientras el Nivel 0 era todo configuración sobre productos cerrados, el Nivel 1 entra en el territorio donde se gana de verdad: **el diseño del contexto que mandás al modelo en cada request**. Tres optimizaciones, todas en Capa 1:
 
 1. **Prompt caching.** Pagar 10% por contenido repetido.
 2. **Gestión de historial.** No re-enviar 200K tokens cuando 10K alcanzan.
 3. **RAG y output budgets.** Mandar solo lo relevante y limitar la longitud de la respuesta.
 
-### 5.1 Prompt caching: la palanca individual de mayor impacto
+### 5.1 Prompt caching: la optimización individual de mayor impacto
 
-Prompt caching es la palanca individual de mayor impacto en aplicaciones que reutilizan contexto. La idea es simple: si un bloque de contenido se repite entre llamadas (un system prompt largo, una base de conocimiento, una guía de estilo, los primeros N turnos de una sesión), se puede marcar para que el proveedor lo cachee y cobre solo el 10% del precio en las llamadas siguientes.
+Prompt caching es la optimización individual de mayor impacto en aplicaciones que reutilizan contexto. La idea es simple: si un bloque de contenido se repite entre llamadas (un system prompt largo, una base de conocimiento, una guía de estilo, los primeros N turnos de una sesión), se puede marcar para que el proveedor lo cachee y cobre solo el 10% del precio en las llamadas siguientes.
 
 #### Cómo funciona la economía del caching
 
@@ -870,7 +870,7 @@ Hay tres jugadores principales en este espacio y conviene entender en qué se di
 
 ## 8. Nivel 4: infraestructura de costo y gobernanza <a id="8-nivel-4"></a>
 
-Este nivel reúne tres palancas que tienen en común no ser optimizaciones de prompt o de modelo, sino **decisiones de infraestructura y procesos** que cambian la estructura del costo. Cada una tiene su lógica:
+Este nivel reúne tres ajustes que tienen en común no ser optimizaciones de prompt o de modelo, sino **decisiones de infraestructura y procesos** que cambian la estructura del costo. Cada uno tiene su lógica:
 
 1. **Batch API.** Para trabajos no-realtime, mitad de precio sin pérdida de calidad.
 2. **DeepSeek vía Azure.** Para tareas masivas baratas con compliance europeo.
@@ -937,28 +937,52 @@ Azure agrega un markup del **20 a 35% sobre el precio directo** ([DeployBase, 20
 
 ### 8.3 Stoppers y observabilidad de costo
 
-La pregunta que mata equipos: "¿quién consumió $5.000 en Claude esta semana?". Sin instrumentación, la respuesta llega cuando ya pasó. Con instrumentación, llega cuando todavía se puede frenar.
+Acá conviene desarmar primero un mito antes de explicar el cómo. La imagen mental de "te van a cobrar de más sin avisar, vas a recibir una factura explotada a fin de mes" es exagerada. **Por default, ningún proveedor serio te explota la factura.** Lo que sí pasa es que cada herramienta tiene su propio comportamiento al llegar al límite, y conviene saber cuál es el de cada una para decidir si querés cambiarlo.
 
-#### Cómo configurar stoppers por vendor
+#### Cómo se comporta cada herramienta por default
 
-Antes de instrumentar nada custom, **cada herramienta tiene un mecanismo nativo de spending limits que conviene revisar y configurar**. Esto no requiere código: son settings de admin en cada plataforma.
+Todas las plataformas tienen al menos uno de estos tres mecanismos de freno antes de que la factura crezca sin control:
 
-| Herramienta | Hay stopper por default | Dónde se configura |
+1. **Rate limits del proveedor.** Un techo duro de requests o tokens por minuto que el vendor te aplica por default. No lo configurás vos. Te frena antes de cualquier explosión, devolviéndote un error tipo "rate limit exceeded".
+2. **Cuota del plan.** Lo que pagaste te da X consumo. Cuando se acaba, te devuelve "limit reached" y tenés que esperar al reset (mensual típicamente) o pagar más.
+3. **Spending limit configurable.** Vos definís cuánto estás dispuesto a gastar arriba del plan. Si lo dejás en cero (el default razonable), no hay overage. Si lo subís, ahí empieza a haber riesgo controlado por vos.
+
+La tabla siguiente resume el comportamiento real por herramienta. Notá que **lo que llamábamos "stopper" en la fila "Hay stopper por default" no significa "te corta sin opciones", significa "no acepta consumo más allá del plan/cuota a menos que vos configures lo contrario"**.
+
+| Herramienta | ¿Te explota la factura por default? | Qué pasa al llegar al límite |
 |---|---|---|
-| **GitHub Copilot (nuevo billing junio 2026)** | No. Por encima de los AI Credits del seat, el overage se factura sin límite | Admin organización en GitHub, Billing & Plans, setear "spending limit" en cero o en un monto X |
-| **Cursor** | Hay tope por plan, pero permite "additional usage" si lo activás | Settings de la org, desactivar overage |
-| **Claude Desktop / Code (planes Pro/Team/Enterprise)** | Sí, te corta cuando se acaba la cuota del plan | Subir de plan o esperar reset mensual |
-| **Anthropic API directa** | No. Cobra hasta que llegue el límite de tu tarjeta o tu workspace limit | Consola Anthropic, Limits, Workspace spend limit |
-| **OpenAI API directa** | No. Mismo modelo que Anthropic | Dashboard OpenAI, Settings, Limits, Monthly budget |
-| **Azure OpenAI / Bedrock** | No. Va a la factura cloud sin tope salvo que se ponga budget alert | Azure Cost Management, Budgets, AWS Budgets, alertas en X% del presupuesto |
+| **Claude Pro / Team / Enterprise (Desktop, Code, Cowork)** | No. | Te corta limpio cuando se acaba la cuota del plan. No hay overage. Esperás al reset mensual o subís de plan. |
+| **Cursor** | No. | Tope por plan. Para que siga consumiendo más allá hay que activar "additional usage" explícitamente desde settings de la org. |
+| **GitHub Copilot (nuevo billing junio 2026)** | No, si está bien configurado. | El seat trae AI Credits incluidos. Cuando se acaban, depende del **spending limit** que el admin de la organización configuró: si está en cero (default razonable), corta; si está en X, consume hasta ese tope y después corta. |
+| **Anthropic API directa** | No. | Cada workspace tiene un **monthly spend limit** configurable. Mientras no lo toques, hay un valor por default. Cuando lo alcanzás, devuelve error. Los rate limits por minuto te frenan cualquier corrida descontrolada antes. |
+| **OpenAI API directa** | No. | Mismo modelo. Dashboard de Settings → Limits trae un **monthly budget** y alertas configurables. |
+| **Azure OpenAI / AWS Bedrock** | Depende de cómo lo configures. | La factura va al cloud account general. No es "canilla libre" (los rate limits del modelo y las cuotas del subscription te frenan antes), pero sí podés terminar pagando más de lo previsto si no armaste **budget alerts** en Azure Cost Management o en AWS Budgets. Hay que configurarlos explícitamente. |
 
-**Cómo se lee esta tabla operacionalmente.** Para cada herramienta que use tu BU:
-1. Entrá a la consola admin correspondiente.
-2. Buscá el setting de spending limit / budget / quota.
-3. Configurá un tope o al menos una alerta al 50%, 80% y 100% de tu presupuesto mensual.
+#### Dónde configurar cada cosa
+
+| Herramienta | Setting a tocar | Ruta |
+|---|---|---|
+| **GitHub Copilot** | Spending limit por organización | Admin organización en GitHub, Billing & Plans, "spending limit" |
+| **Cursor** | Additional usage | Settings de la org, desactivar overage |
+| **Anthropic API** | Workspace spend limit | Consola Anthropic, Limits, Workspace spend limit |
+| **OpenAI API** | Monthly budget | Dashboard OpenAI, Settings, Limits, Monthly budget |
+| **Azure OpenAI** | Budget alert | Azure Cost Management, Budgets, alertas en X% del presupuesto |
+| **AWS Bedrock** | Budget alert | AWS Budgets, alertas en X% del presupuesto |
+
+#### La conclusión operativa
+
+El mensaje correcto no es "te van a cobrar de más sin que te enteres". Es:
+
+- **Por default, las herramientas serias te paran cuando llegás al límite.** Vas a ver "limit reached" o "rate limit exceeded" antes de que la factura se desborde.
+- **Si querés que la herramienta siga funcionando más allá del plan**, vos elegís activar overage o subir el spending limit. Eso es decisión consciente, no accidente.
+- **El cuidado adicional aplica en Azure/Bedrock**: como la factura va al cloud account general, conviene siempre configurar budget alerts. No para que corten (no cortan), pero sí para que te avisen antes de que el gasto se vaya de lo presupuestado.
+- **El stopper no es solución, es alarma de incendio.** Si tu factura llega al tope, algo se rompió antes. La pregunta no es "¿cuándo nos cortan?", es "¿quién está mirando la trayectoria y avisando antes de que el tope se acerque?".
+
+Para cada herramienta que use tu BU, el ejercicio operativo es:
+1. Entrá a la consola admin correspondiente y mirá cómo está configurado el spending limit/budget hoy.
+2. Confirmá que el default es "no consumir más allá del plan sin autorización explícita" o decidí conscientemente subir el tope con un valor que tenga sentido para tu presupuesto.
+3. Configurá alertas al 50%, 80% y 100% para que alguien mire la trayectoria sin esperar al corte.
 4. Documentá quién es el responsable de revisar esos topes cada mes.
-
-**El stopper no es solución, es alarma de incendio.** Si tu factura llega al tope, algo se rompió antes. La pregunta no es "¿cuándo nos cortan?", es "¿quién está mirando la trayectoria y avisando antes de que el tope se acerque?".
 
 #### Budget monitor custom (para apps con API directa)
 
@@ -1046,23 +1070,27 @@ export OTEL_RESOURCE_ATTRIBUTES="team.id=platform,department=engineering"
 
 ### 9.2 OTel en Copilot Chat
 
-Para Copilot la activación es por settings, más simple que en Claude Code:
+Para Copilot la activación es por settings, más simple que en Claude Code. Tiene dos modos de exportar: a un endpoint OTLP (un servidor o container que recibe las métricas) o **directo a un archivo local JSONL en tu propia máquina**. Para uso individual el archivo local es lo más simple y lo que vamos a usar en la Sección 9.6.
+
+**Modo archivo local (recomendado para uso personal):**
+
+```json
+{
+    "github.copilot.chat.otel.enabled": true,
+    "github.copilot.chat.otel.exporterType": "file",
+    "github.copilot.chat.otel.outfile": "/Users/tu-usuario/.copilot-otel.jsonl"
+}
+```
+
+Con esto, cada interacción con Copilot Chat se escribe como una línea JSON al archivo. Nada sale de tu máquina. El archivo se llena solo a medida que usás Copilot normalmente.
+
+**Modo endpoint OTLP (para conectar a un container o backend):**
 
 ```json
 {
     "github.copilot.chat.otel.enabled": true,
     "github.copilot.chat.otel.exporterType": "otlp",
     "github.copilot.chat.otel.otlpEndpoint": "http://localhost:4317"
-}
-```
-
-**Qué hace:** activa el export OTel desde Copilot Chat hacia el endpoint que indiques. Si querés algo más simple sin levantar backend, podés exportar a un archivo local:
-
-```json
-{
-    "github.copilot.chat.otel.enabled": true,
-    "github.copilot.chat.otel.exporterType": "file",
-    "github.copilot.chat.otel.outfile": "/tmp/copilot-otel.jsonl"
 }
 ```
 
@@ -1151,62 +1179,311 @@ A escala enterprise no podés pedirle a cada developer que configure su shell co
 }}
 ```
 
-Con esto, **todos los developers del grupo quedan instrumentados automáticamente**, los datos viajan a un collector interno autenticado con bearer token, y desde el primer día tenés visibilidad real de cómo se está usando IA en toda la organización. Es la fundación que habilita las decisiones de optimización de los niveles anteriores: sin observabilidad enterprise, las palancas son apuestas.
+Con esto, **todos los developers del grupo quedan instrumentados automáticamente**, los datos viajan a un collector interno autenticado con bearer token, y desde el primer día tenés visibilidad real de cómo se está usando IA en toda la organización. Es la fundación que habilita las decisiones de optimización de los niveles anteriores: sin observabilidad enterprise, las decisiones son apuestas.
 
-### 9.6 Gobernanza personal: tu propio dashboard en 10 minutos
+### 9.6 Gobernanza personal: tu propio dashboard en 10 minutos, todo en tu máquina
 
-Las secciones 9.1 a 9.5 están pensadas para plataforma. Esta sección es distinta: es para **cualquier persona que use IA todos los días** y quiera ver su propio consumo, sin esperar a que el equipo de plataforma arme infraestructura.
+Las secciones 9.1 a 9.5 están pensadas para plataforma. Esta sección es distinta: es para **cualquier persona que use IA todos los días** y quiera ver su propio consumo, sin esperar a que el equipo de plataforma arme infraestructura, sin pagar nada extra, sin subir métricas a ningún servicio externo.
 
-La idea: con las mismas tecnologías que la sección anterior pero a escala individual, en 10 minutos cualquier dev puede tener su dashboard personal que le responde:
+La idea: con un script Python chico y un HTML estático, en 10 minutos cualquier dev puede tener su dashboard personal que le responde:
 
 - ¿Cuántas sesiones abrí esta semana?
-- ¿Cuánto estoy reenviando de contexto repetido?
+- ¿Cuánto estoy reenviando de contexto repetido (cache hit ratio)?
 - ¿Qué modelos estoy usando, en qué proporción?
 - ¿Cuántos tokens fueron input vs output?
 - ¿Cuánto me cuesta cada día?
 
-#### Camino A: Grafana Cloud (sin servidor, free tier)
+#### Camino A (recomendado): script Python + HTML estático local
 
-Esta es la opción más rápida y más cómoda. Grafana ofrece un tier gratis que incluye un endpoint OTLP, base de datos de métricas y dashboards. Cero infraestructura local, todo desde el browser.
+Esta es la opción más liviana y la que respeta el principio "nada sale de mi máquina". El flujo conceptual es simple:
 
-**Pasos:**
+1. **Activar export a archivo local** en las herramientas (variables de entorno para Claude Code, JSON setting para Copilot Chat). El archivo se llena solo a medida que usás las herramientas normalmente.
+2. **Correr el script Python** una vez por semana (o cuando quieras una foto). Lee el archivo, calcula agregaciones, escribe un `dashboard.html` en la misma carpeta.
+3. **Abrir el HTML en el browser.** Ver los gráficos. Mirar. Ajustar tu uso si hace falta.
 
-1. Te registrás gratis en https://grafana.com/products/cloud/. El free tier es generoso para uso individual.
-2. Después del signup, te dan un **endpoint OTLP** específico para tu cuenta. Es una URL del tipo `https://otlp-gateway-prod-us-central-0.grafana.net/otlp`.
-3. También te dan credenciales (instance ID + API token) que se pasan como header de autorización.
-4. En tu `~/.zshrc` o `~/.bashrc`, poné las variables de entorno apuntando al endpoint de Grafana Cloud:
+Nada de docker. Nada de servidor corriendo. Nada de cuenta cloud. Cero euros. El script lee de un archivo de texto plano y escribe a un archivo HTML, eso es todo.
+
+##### Setup paso a paso
+
+**Paso 1. Activar el export en Claude Code.**
+
+En tu `~/.zshrc` (Mac/Linux) o variables de entorno (Windows):
 
 ```bash
 export CLAUDE_CODE_ENABLE_TELEMETRY=1
-export OTEL_METRICS_EXPORTER=otlp
 export OTEL_LOGS_EXPORTER=otlp
+export OTEL_METRICS_EXPORTER=otlp
 export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
-export OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-us-central-0.grafana.net/otlp
-export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Basic <tu-token-base64>"
+# Claude Code aún no soporta export directo a archivo;
+# para uso personal lo más simple es levantar Aspire Dashboard local
+# (ver Camino B) o usar el comando claude --debug que loguea a stderr.
 ```
 
-Notá que cambia `OTEL_EXPORTER_OTLP_PROTOCOL` a `http/protobuf` en este caso (Grafana Cloud no acepta gRPC directo).
+> Nota: Claude Code al momento de escribir este doc no expone un modo "export a file" tan directo como Copilot. La alternativa más limpia para uso personal es usar el Camino B (Aspire local) o ejecutar Claude Code con `--debug` y redirigir stderr a un archivo. Para Copilot Chat, el camino A funciona puro.
 
-5. Hacer `source ~/.zshrc` (o reiniciar la terminal). De ahí en adelante, cada sesión de Claude Code va a mandar métricas a Grafana Cloud.
-6. En el browser, vas al dashboard de Grafana Cloud y armás las visualizaciones que querés.
+**Paso 2. Activar el export en Copilot Chat.**
 
-#### Camino B: Aspire Dashboard local (si preferís que nada salga de tu máquina)
+En VSCode `settings.json`:
 
-Si por temas de privacidad preferís que las métricas no salgan de tu computadora, levantás el container de Aspire Dashboard (el mismo de la Sección 9.3). Mismo `docker run`, y las variables apuntan a `localhost:4317` en lugar de Grafana Cloud.
+```json
+{
+    "github.copilot.chat.otel.enabled": true,
+    "github.copilot.chat.otel.exporterType": "file",
+    "github.copilot.chat.otel.outfile": "/Users/tu-usuario/.copilot-otel.jsonl"
+}
+```
 
-Trade-off: el dashboard solo está disponible cuando el container está corriendo. Si reiniciás la máquina, los datos persisten en el container (mientras no lo borres). Para uso individual está perfecto, pero no es para análisis de tendencias de meses.
+Reemplazar `/Users/tu-usuario/` con tu home real (`$HOME` en Mac/Linux, `%USERPROFILE%` en Windows). De ahí en adelante, cada vez que uses Copilot Chat, se va a escribir una línea JSON al archivo. Sin que tengas que hacer nada.
 
-#### Cómo armás las visualizaciones útiles
+**Paso 3. El script Python que arma el dashboard.**
 
-Una vez que el backend está recibiendo datos, las cinco preguntas de gobernanza personal se traducen así en términos de PromQL (el lenguaje de queries de Prometheus, también usado por Grafana Cloud):
+Guardalo como `dashboard.py` en cualquier carpeta (idealmente la misma donde está el JSONL o un proyecto separado):
 
-- **¿Cuántas sesiones abrí esta semana?** Query: `sum(claude_code_session_count) by (day)`, gráfico de barras agrupado por día.
-- **¿Cuánto estoy reenviando de contexto repetido?** Query: ratio entre `claude_code_token_usage{type="cache_read"}` y `claude_code_token_usage{type="input"}`. Cuanto más alto el `cache_read`, mejor.
-- **¿Qué modelos estoy usando, en qué proporción?** Query: `sum(claude_code_token_usage) by (model)`, pie chart o barras horizontales.
-- **¿Cuántos tokens input vs output?** Query: `sum(claude_code_token_usage) by (type)` filtrando `type="input"` vs `type="output"`. El output cuesta 4 a 6x más, así que ver esta proporción te dice si tus pedidos están sesgados a generación pesada.
-- **¿Cuánto me cuesta cada día?** Query: `sum(claude_code_cost_usage) by (day)`, línea temporal.
+```python
+#!/usr/bin/env python3
+"""
+Dashboard personal de consumo de Copilot Chat / Claude Code.
+Lee el JSONL exportado por las herramientas y genera un HTML estático
+con gráficos. Cero dependencias externas (solo stdlib + Chart.js via CDN).
 
-Si nunca tocaste Grafana, el camino más rápido es importar un dashboard pre-armado: hay varios open source en https://grafana.com/grafana/dashboards/ buscando "Claude Code" o "OpenTelemetry GenAI" que ya tienen estas queries y otras.
+Uso: python dashboard.py /ruta/al/copilot-otel.jsonl
+"""
+import json
+import sys
+import os
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+
+# --- Precios de referencia (USD por millón de tokens, mayo 2026) ---
+PRICES = {
+    "claude-haiku-4-5":    {"input": 1.00, "output": 5.00,  "cache_read": 0.10},
+    "claude-sonnet-4-6":   {"input": 3.00, "output": 15.00, "cache_read": 0.30},
+    "claude-opus-4-7":     {"input": 5.00, "output": 25.00, "cache_read": 0.50},
+    "gpt-5-nano":          {"input": 0.05, "output": 0.40,  "cache_read": 0.00},
+    "gpt-5.4":             {"input": 2.50, "output": 15.00, "cache_read": 0.25},
+    "gpt-5.5":             {"input": 5.00, "output": 30.00, "cache_read": 0.50},
+}
+
+def calc_cost(model, input_t, output_t, cache_read_t=0):
+    """Calcula costo en USD para una llamada dada."""
+    p = PRICES.get(model.lower(), PRICES["claude-sonnet-4-6"])  # fallback razonable
+    return (input_t * p["input"] + output_t * p["output"] + cache_read_t * p["cache_read"]) / 1_000_000
+
+def parse_jsonl(path):
+    """Lee el JSONL y devuelve una lista de eventos normalizados."""
+    events = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                evt = json.loads(line)
+                # Las GenAI Semantic Conventions usan estos atributos:
+                attrs = evt.get("attributes", {})
+                model = attrs.get("gen_ai.request.model", "unknown")
+                input_t = int(attrs.get("gen_ai.usage.input_tokens", 0))
+                output_t = int(attrs.get("gen_ai.usage.output_tokens", 0))
+                cache_read_t = int(attrs.get("gen_ai.usage.cache_read_input_tokens", 0))
+                # Timestamp puede venir en varios formatos
+                ts_str = evt.get("timestamp") or evt.get("time") or attrs.get("timestamp")
+                if ts_str:
+                    try:
+                        ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                    except Exception:
+                        ts = datetime.now()
+                else:
+                    ts = datetime.now()
+                events.append({
+                    "ts": ts,
+                    "day": ts.strftime("%Y-%m-%d"),
+                    "model": model,
+                    "input_tokens": input_t,
+                    "output_tokens": output_t,
+                    "cache_read_tokens": cache_read_t,
+                    "cost_usd": calc_cost(model, input_t, output_t, cache_read_t),
+                })
+            except (json.JSONDecodeError, KeyError, ValueError):
+                continue
+    return events
+
+def aggregate(events):
+    """Calcula las agregaciones para el dashboard."""
+    sessions_per_day = defaultdict(int)
+    tokens_per_day = defaultdict(lambda: {"input": 0, "output": 0, "cache_read": 0})
+    cost_per_day = defaultdict(float)
+    tokens_per_model = defaultdict(int)
+    total_input = total_output = total_cache_read = 0
+
+    for e in events:
+        sessions_per_day[e["day"]] += 1
+        tokens_per_day[e["day"]]["input"] += e["input_tokens"]
+        tokens_per_day[e["day"]]["output"] += e["output_tokens"]
+        tokens_per_day[e["day"]]["cache_read"] += e["cache_read_tokens"]
+        cost_per_day[e["day"]] += e["cost_usd"]
+        tokens_per_model[e["model"]] += e["input_tokens"] + e["output_tokens"]
+        total_input += e["input_tokens"]
+        total_output += e["output_tokens"]
+        total_cache_read += e["cache_read_tokens"]
+
+    cache_hit_ratio = (total_cache_read / (total_cache_read + total_input)) if (total_cache_read + total_input) > 0 else 0
+    return {
+        "sessions_per_day": dict(sorted(sessions_per_day.items())),
+        "tokens_per_day": dict(sorted(tokens_per_day.items())),
+        "cost_per_day": dict(sorted(cost_per_day.items())),
+        "tokens_per_model": dict(tokens_per_model),
+        "totals": {
+            "input": total_input, "output": total_output, "cache_read": total_cache_read,
+            "cost": sum(cost_per_day.values()),
+            "cache_hit_ratio": cache_hit_ratio,
+        },
+    }
+
+HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mi consumo de IA</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 1100px; margin: 2em auto; padding: 0 1em; color: #222; }
+  h1 { border-bottom: 2px solid #333; padding-bottom: .3em; }
+  .totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; margin: 2em 0; }
+  .card { background: #f5f5f5; padding: 1em; border-radius: 6px; text-align: center; }
+  .card .v { font-size: 1.8em; font-weight: bold; color: #1a5d99; }
+  .card .l { font-size: .9em; color: #666; }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2em; margin: 2em 0; }
+  .chart-full { margin: 2em 0; }
+  canvas { max-height: 320px; }
+</style>
+</head>
+<body>
+<h1>Mi consumo de IA</h1>
+<p>Generado: __GENERATED__. Eventos analizados: <strong>__EVENT_COUNT__</strong>.</p>
+
+<div class="totals">
+  <div class="card"><div class="v">__TOTAL_INPUT__</div><div class="l">tokens input</div></div>
+  <div class="card"><div class="v">__TOTAL_OUTPUT__</div><div class="l">tokens output</div></div>
+  <div class="card"><div class="v">__CACHE_HIT__%</div><div class="l">cache hit ratio</div></div>
+  <div class="card"><div class="v">$__TOTAL_COST__</div><div class="l">costo total estimado</div></div>
+</div>
+
+<div class="chart-full"><h2>Sesiones por día</h2><canvas id="sessions"></canvas></div>
+<div class="chart-row">
+  <div><h2>Costo por día (USD)</h2><canvas id="cost"></canvas></div>
+  <div><h2>Modelos usados (tokens totales)</h2><canvas id="models"></canvas></div>
+</div>
+<div class="chart-full"><h2>Tokens input vs output por día</h2><canvas id="tokens"></canvas></div>
+
+<script>
+const DATA = __DATA_JSON__;
+
+new Chart(document.getElementById('sessions'), {
+  type: 'bar',
+  data: { labels: Object.keys(DATA.sessions_per_day), datasets: [{ label: 'Sesiones', data: Object.values(DATA.sessions_per_day), backgroundColor: '#1a5d99' }] },
+  options: { responsive: true }
+});
+
+new Chart(document.getElementById('cost'), {
+  type: 'line',
+  data: { labels: Object.keys(DATA.cost_per_day), datasets: [{ label: 'USD', data: Object.values(DATA.cost_per_day), borderColor: '#c0392b', fill: false, tension: 0.2 }] },
+  options: { responsive: true }
+});
+
+new Chart(document.getElementById('models'), {
+  type: 'doughnut',
+  data: { labels: Object.keys(DATA.tokens_per_model), datasets: [{ data: Object.values(DATA.tokens_per_model), backgroundColor: ['#1a5d99','#c0392b','#27ae60','#f39c12','#8e44ad','#16a085'] }] },
+  options: { responsive: true }
+});
+
+const days = Object.keys(DATA.tokens_per_day);
+new Chart(document.getElementById('tokens'), {
+  type: 'bar',
+  data: {
+    labels: days,
+    datasets: [
+      { label: 'Input', data: days.map(d => DATA.tokens_per_day[d].input), backgroundColor: '#1a5d99' },
+      { label: 'Output', data: days.map(d => DATA.tokens_per_day[d].output), backgroundColor: '#c0392b' },
+      { label: 'Cache read', data: days.map(d => DATA.tokens_per_day[d].cache_read), backgroundColor: '#27ae60' }
+    ]
+  },
+  options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+});
+</script>
+</body>
+</html>
+"""
+
+def render_html(agg, event_count, out_path):
+    """Genera el HTML estático."""
+    t = agg["totals"]
+    html = (HTML_TEMPLATE
+        .replace("__GENERATED__", datetime.now().strftime("%Y-%m-%d %H:%M"))
+        .replace("__EVENT_COUNT__", str(event_count))
+        .replace("__TOTAL_INPUT__", f"{t['input']:,}")
+        .replace("__TOTAL_OUTPUT__", f"{t['output']:,}")
+        .replace("__CACHE_HIT__", f"{t['cache_hit_ratio']*100:.0f}")
+        .replace("__TOTAL_COST__", f"{t['cost']:.2f}")
+        .replace("__DATA_JSON__", json.dumps(agg))
+    )
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+def main():
+    if len(sys.argv) < 2:
+        print("Uso: python dashboard.py /ruta/al/copilot-otel.jsonl")
+        sys.exit(1)
+    jsonl_path = Path(sys.argv[1]).expanduser()
+    if not jsonl_path.exists():
+        print(f"No existe: {jsonl_path}")
+        sys.exit(1)
+    events = parse_jsonl(jsonl_path)
+    if not events:
+        print("El archivo no tiene eventos parseables todavía. Usá Copilot Chat un poco más y volvé a correr.")
+        sys.exit(0)
+    agg = aggregate(events)
+    out_path = jsonl_path.parent / "dashboard.html"
+    render_html(agg, len(events), out_path)
+    print(f"Dashboard generado: {out_path}")
+    print(f"Abrilo con: open {out_path}  (Mac)  o  xdg-open {out_path}  (Linux)  o  start {out_path}  (Windows)")
+
+if __name__ == "__main__":
+    main()
+```
+
+**Paso 4. Correr el script.**
+
+Después de usar Copilot un par de días para que el JSONL tenga datos:
+
+```bash
+python dashboard.py ~/.copilot-otel.jsonl
+```
+
+Esto genera un `dashboard.html` en la misma carpeta del JSONL. Abrirlo con doble click o desde la terminal. Listo: gráfico de sesiones por día, costo por día, modelos usados, tokens input vs output.
+
+##### Por qué este enfoque
+
+- **Cero infraestructura.** No hay container corriendo, no hay puerto abierto, no hay servicio que mantener. Si reiniciás la máquina, no se rompe nada.
+- **Privacidad real.** Las métricas viven en un archivo de texto en tu disco. Si querés borrar todo, `rm ~/.copilot-otel.jsonl`. Si querés ver qué tiene, `cat`. Si querés copiarlo a otra máquina, lo copiás.
+- **Modificable.** El script son 150 líneas de Python sin dependencias. Si querés agregar una métrica nueva, abrir el archivo y editar. Si querés cambiar los colores del HTML, lo mismo.
+- **Reproducible.** Otro dev del equipo puede correr el mismo script con su propio JSONL y obtener su propio dashboard. Cada uno con sus datos, sin compartir nada.
+
+##### Limitaciones
+
+- Es una foto, no un dashboard en tiempo real. Para verlo actualizado tenés que correr el script de nuevo.
+- Los costos son estimaciones basadas en la tabla de PRICES del script. Si Anthropic u OpenAI cambian precios, hay que actualizar el diccionario.
+- Para Claude Code, hasta que Anthropic exponga un export directo a archivo equivalente al de Copilot, la alternativa práctica es usar el Camino B (Aspire local).
+
+#### Camino B (alternativo): Aspire Dashboard local
+
+Si preferís una UI más rica y en tiempo real, y no te molesta tener un container corriendo, usá el Aspire Dashboard local (mismo de la Sección 9.3). Mismo `docker run`, las variables de Claude Code y Copilot apuntan a `localhost:4317`, y mirás todo desde http://localhost:18888. Sigue siendo todo local, nada sale de tu máquina.
+
+Trade-off: requiere Docker instalado, hay un container corriendo mientras lo uses, y los datos viven en el container (mientras no lo borres).
+
+#### Mención secundaria: Grafana Cloud (free tier)
+
+Si en algún momento el dashboard local te queda corto (querés tendencias de meses, compartir con un colega, recibir alertas por email cuando el costo del mes pasa cierto umbral), el escalón siguiente es Grafana Cloud. Tiene un free tier que incluye endpoint OTLP, base de datos de métricas y dashboards web. Funciona apuntando las variables de entorno a su endpoint en lugar de a localhost. La contra es que las métricas salen de tu máquina hacia Grafana. Para uso personal puro, el Camino A es la opción de menor fricción y mayor privacidad.
 
 #### Por qué importa que cada uno se mida
 
