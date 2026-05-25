@@ -8,9 +8,9 @@
 
 ## Última actualización
 
-**Fecha:** 24 mayo 2026
-**Por:** Opus 4.7 — cierre de jornada con 6 archivos finales en PRODV2 (3 ES + 3 EN) y creación de QUICK-START.md
-**Trigger:** Pedido del usuario de dejar todo listo para retomar mañana con el menor consumo de tokens posible
+**Fecha:** 25 mayo 2026
+**Por:** Opus 4.7 — cierre de sesión con versión short-align creada en ES + EN tras feedback del lead
+**Trigger:** Feedback del líder del usuario sobre la versión short: pedido de invertir estructura (lead con business stake, no filosofía), diferenciar por audiencia (dev/tech lead/BU MD), y conectar con Accelerator interno
 
 ---
 
@@ -19,52 +19,34 @@
 | Entregable | Idioma | Archivo | Estado |
 |------------|--------|---------|--------|
 | **Artículo largo** | **ES** | `PRODV2/articulo-final.md` | ✅ FINAL — 34,5 KB |
-| **Artículo corto** | **ES** | `PRODV2/articulo-final-short.md` | ✅ FINAL — 14,3 KB |
-| **Doc técnico** | **ES** | `PRODV2/doc-tecnico-final.md` | ✅ FINAL — 120 KB con script Python + HTML para dashboard personal |
+| **Artículo corto (magazine)** | **ES** | `PRODV2/articulo-final-short.md` | ✅ FINAL — 14,3 KB |
+| **Artículo short-align (exec)** | **ES** | `PRODV2/articulo-final-short-align.md` | ✅ FINAL — 11,5 KB |
+| **Doc técnico** | **ES** | `PRODV2/doc-tecnico-final.md` | ✅ FINAL — 120 KB |
 | **Artículo largo** | **EN** | `PRODV2/EN/articulo-final-EN.md` | ✅ FINAL — 34,7 KB |
-| **Artículo corto** | **EN** | `PRODV2/EN/articulo-final-short-EN.md` | ✅ FINAL — 14,3 KB |
+| **Artículo corto (magazine)** | **EN** | `PRODV2/EN/articulo-final-short-EN.md` | ✅ FINAL — 14,3 KB |
+| **Artículo short-align (exec)** | **EN** | `PRODV2/EN/articulo-final-short-align-EN.md` | ✅ FINAL — ~11 KB |
 | **Doc técnico** | **EN** | `PRODV2/EN/doc-tecnico-final-EN.md` | ✅ FINAL — 115,5 KB |
-| Artículo v1 (histórico) | ES | `PROD/article-draft-v1.md` | Obsoleto, no tocar |
-| Artículo v1 (histórico) | EN | `PROD/article-draft-v1-EN.md` | Obsoleto, no tocar |
-| Doc técnico v1 (histórico) | ES | `PROD/technical-docs-draft-v1.md` | Obsoleto |
-| Doc técnico v1 (histórico) | EN | `PROD/technical-docs-draft-v1-EN.md` | Obsoleto |
-| Doc técnico v2 (histórico) | ES | `PROD/technical-docs-draft-v2.md` | Obsoleto, reemplazado por `PRODV2/doc-tecnico-final.md` |
-| Documento standalone procurement | ES | `PRODV2/hyperscaler-discount-vs-gdpr-ES.md` | Existe, contenido absorbido por sección 3 del técnico final |
-| Índice ejecutivo JON | ES/EN | `PROD/JON.md` / `JON-EN.md` | Pendiente actualizar si se quiere referenciar PRODV2 |
-| Brief Claude Design | ES/EN | `PROD/claude-design-brief-ES.md` / `EN.md` | Sin cambios |
-
----
-
-## Estado de la investigación
-
-| Archivo | Estado |
-|---------|--------|
-| `research/01..09` | ✅ Completo |
-| `data/verified-metrics.md` | ✅ Sirvió de fuente, no se modificó en esta sesión |
-| `article/outline.md` | ✅ Aprobado (referencia histórica) |
 
 ---
 
 ## PRÓXIMO PASO CONCRETO
 
-No hay próximo paso obligatorio. La jornada del 24 cerró todos los entregables que el usuario pidió. Mañana al retomar, opciones sugeridas en `.context/QUICK-START.md` sección "POSIBLES PRÓXIMOS PASOS". El usuario decide al inicio de la próxima sesión.
+No hay próximo paso obligatorio. La sesión del 25 cerró todos los ajustes que el líder pidió sobre la short, en ES y EN. Posibles próximos pasos en `.context/QUICK-START.md`.
 
 ---
 
-## Decisiones cerradas en esta jornada (24 mayo 2026)
+## Decisiones cerradas en esta sesión (25 mayo 2026)
 
-Documentadas en detalle en `.context/QUICK-START.md` sección "DECISIONES EDITORIALES QUE YA ESTÁN APLICADAS". Resumen:
-
-1. Sin guiones largos en ningún texto generado.
-2. Palabra "palanca" reemplazada por ajuste/optimización/control en todo el material.
-3. Glosas inline de siglas (BU, MACC, EA, TCO, MDM, JSONL, ZDR, RAG, OTel, BYOK) la primera vez que aparecen.
-4. Sección stoppers reescrita: ningún vendor explota la factura por default.
-5. Gobernanza personal en 9.6 del técnico ahora es script Python local + HTML estático con Chart.js. Camino principal sin docker, sin cuenta cloud, sin nada saliendo de la máquina.
-6. Espectro de 3 niveles: productos cerrados / herramientas con configuración / API directa.
-7. Placeholders `(Link al documento técnico)` y `(Link al artículo extendido)` para links cruzados, los reemplaza el usuario después.
-8. Frase guía traducida como "Spend well, not spend less".
-9. Versión corta del artículo creada (~14 KB) fusionando 6 objeciones en 3, sacando paralelismo AWS y "Lo que no te puede arreglar".
-10. Carpeta `PRODV2/EN/` creada con los 3 archivos traducidos al inglés profesional conversacional, manteniendo terminología técnica en inglés tal cual.
+1. **Versión short-align creada** con estructura nueva en 7 bloques: business stake + 3 acciones + diferenciado por rol (dev/tech lead/BU MD) + números + momento + Accelerator + cierre. Lead with business stake, not philosophy.
+2. **Cifra ~3.5x para uso agéntico:** usada sin atribuir fuente Synapx en el texto. El usuario la pasa aparte si alguien pregunta.
+3. **Bloque tech lead reescrito** tras feedback:
+   - Observabilidad como herramienta de doble propósito (ayuda al dev a optimizar SU uso, ayuda al tech lead a entender el consumo del equipo). Sin frase confrontativa sobre BUs.
+   - Cómo medir: múltiples opciones (vendor dashboards, CSV, billing APIs, OTel) con OTel como recomendación a mediano plazo. "Lo importante es elegir una y empezar".
+   - Arquitectura como ejercicio de mapeo (qué herramienta para qué caso, detectar mismatches con el espectro de 3 niveles), no como prescripción. Ejemplo concreto: ChatGPT consumer para tareas que ameritan otra cosa.
+4. **Terminología ajustada:** "Unit economics" → "La cuenta concreta que conviene hacer". "Line item" → "el presupuesto general de AI tools".
+5. **Accelerator:** mención al programa interno + módulo de tokens en preparación + teaching modules self-service. **Sin detalles operativos del piloto** (waitlist, sign-up, contacto) por pedido del usuario. Cuidar wording: no prometer workshops para todos.
+6. **Traducción EN de la short-align** manteniendo terminología técnica en inglés tal cual y frase guía "Spend well, not spend less".
+7. **QUICK-START.md y este archivo actualizados** para registrar la versión short-align como entregable activo.
 
 ---
 
@@ -83,7 +65,8 @@ Ninguno.
 | (sesión Haiku) | Haiku | ⚠️ El modelo no logró retomar contexto. Trigger del rediseño actual. |
 | 21 may 2026 | Opus 4.7 | Rediseño de ingeniería de contexto (.context/ creado) |
 | 21 may 2026 | Opus 4.7 | Creación de PRODV2: copia v2 + documento standalone hyperscaler-discount-vs-gdpr-ES.md |
-| **24 may 2026** | **Opus 4.7** | **Jornada larga: análisis de Examples, iteración sobre artículo y técnico v1-v2-v3, decisión de separar en par articulo-final/doc-tecnico-final. Tres ajustes editoriales (sin em-dashes, palabra palanca, espectro renombrado). Reescritura completa de sección stoppers y de gobernanza personal con script Python local + HTML. Glosa de siglas inline incluida JSONL. Versión short del artículo creada (~14 KB). Traducción completa al inglés de los 3 archivos en `PRODV2/EN/`. Cierre con creación de QUICK-START.md y actualización de CLAUDE.md y este archivo para arranque rápido mañana.** |
+| 24 may 2026 | Opus 4.7 | Jornada larga: análisis de Examples, iteración sobre artículo y técnico v1-v2-v3, decisión de separar en par articulo-final/doc-tecnico-final. Tres ajustes editoriales (sin em-dashes, palabra palanca, espectro renombrado). Reescritura completa de sección stoppers y de gobernanza personal con script Python local + HTML. Glosa de siglas inline incluida JSONL. Versión short del artículo creada (~14 KB). Traducción completa al inglés de los 3 archivos en `PRODV2/EN/`. Cierre con creación de QUICK-START.md y actualización de CLAUDE.md y este archivo para arranque rápido. |
+| **25 may 2026** | **Opus 4.7** | **Sesión de iteración sobre la short: feedback del líder del usuario aplicado. Creación de `articulo-final-short-align.md` con estructura nueva (lead con business stake + 3 acciones + diferenciado por rol + Accelerator). Iteración con 6 ajustes finos pedidos por el usuario (observabilidad sin sonar agresiva, arquitectura como ejercicio de mapeo no prescripción, formas de medir más allá de OTel, términos más claros). Traducción al inglés. Update de QUICK-START y este archivo.** |
 
 ---
 
