@@ -36,22 +36,27 @@ Una línea de qué, una de por qué, una de cómo empezar. El desarrollo complet
 **Por qué te importa:** los heavy users (10 a 15% del equipo) típicamente generan el 60 a 70% del spend. Sin visibilidad por equipo, esa concentración es invisible y se atribuye a "más uso de IA en general". Cuando el budget pase a usage-based, vos sos el que va a tener que explicar qué movió la factura este mes. Sin observabilidad, no hay respuesta concreta.
 
 **El patrón a establecer en tu equipo:**
-- **Observabilidad básica:** que cada dev tenga su dashboard personal (te toma 10 min en tu standup explicarlo, después cada uno lo arma solo). La gobernanza colectiva se construye desde abajo, no pidiendo reportes a las BUs.
-- **Una decisión de arquitectura por feature LLM:** dónde vive cada caso de uso en el espectro de tres niveles (productos cerrados / herramientas con configuración / API directa). Las features con uso programático masivo deberían migrar a API directa con caching y batch; el resto puede quedarse donde está.
+
+- **Observabilidad básica:** que cada dev tenga su dashboard personal cumple dos funciones a la vez. La primera, ayuda al dev a entender su uso, ver qué sesiones son caras y optimizar. La segunda, te ayuda a vos como tech lead a entender el consumo agregado del equipo, ver dónde se concentra, y tener datos concretos para conversar con la BU o con Finance cuando llegue el momento. Lo bueno es que las dos cosas se logran con el mismo setup, sin pedirle al dev nada extra.
+
+  **Sobre cómo medir, hay varias formas y lo importante es elegir una y empezar.** Los vendor dashboards nativos (Copilot admin analytics, Cursor Admin Dashboard, consola de Anthropic) están disponibles sin setup y son un buen punto de partida si querés tener algo andando esta semana. CSV exports y APIs de billing del vendor sirven para reportes mensuales sin tooling nuevo. **A mediano plazo, mi sugerencia es OTel (OpenTelemetry, el estándar abierto de observabilidad):** es vendor-neutral, soportado nativamente por Claude Code y Copilot Chat, y unifica métricas, traces y logs en un solo backend. Es el camino más completo y el que mejor escala cuando aparecen más herramientas en el stack.
+
+- **Una mirada al uso actual del equipo:** mapear qué herramienta está usándose para qué tipo de caso, y aplicar el espectro de tres niveles (productos cerrados / herramientas con configuración / API directa) como criterio para detectar mismatches. Si alguien está apoyándose en ChatGPT consumer para una tarea que requiere observabilidad, gobernanza o repetibilidad, eso es un mismatch a conversar. Si una feature de producto con uso programático masivo está corriendo sin caching, eso es otro. La idea no es prescribir una arquitectura única, sino tener visibilidad de qué se usa para qué, y decidir caso por caso si hay algo a ajustar.
+
 - **Un responsable nombrado** de mirar la trayectoria mensual del consumo de tu equipo. Sin nombre y apellido, no se mira.
 
-**Esta semana:** identificá si tu equipo tiene alguna feature de producto que llame a un modelo sin caching, sin OTel (OpenTelemetry, el estándar de observabilidad), o sin model assignment por tarea. Si la respuesta es sí a cualquiera, esa es la primera conversación que conviene tener.
+**Esta semana:** dedicá una hora con el equipo a hacer ese mapeo simple. Qué herramientas usan, para qué casos. Anotalo. Probablemente vas a encontrar uno o dos casos donde hay un mismatch obvio, y esa es la primera conversación que conviene tener.
 
 ### Si tomás decisiones de presupuesto en una BU
 
 **Por qué te importa:** la línea "AI tools" de tu BU se vuelve variable a partir del 1 de junio, en una parte significativa. La pregunta de Finance en julio no va a ser "¿gastamos más?", va a ser "¿por qué subió?". La respuesta correcta no es "porque usamos más IA", es: "porque tales features pasaron a producción y tales no tienen caching activado".
 
-**Unit economics que conviene tener mapeados antes de fin de mes:**
+**La cuenta concreta que conviene hacer antes de fin de mes:**
 - Costo actual por seat de Copilot, multiplicado por tu población activa.
 - Proyección de costo para los heavy users (~10 a 15% del equipo) bajo el nuevo billing. Si tu BU tiene heavy users con uso agéntico, la línea puede subir hasta ~3.5x para ese segmento. Vale la pena conocerlo antes que reaccionar.
 - Línea separada para las features de producto que llaman a APIs directas. Esa línea es la que escala con uso de cliente, no con headcount, y se gobierna con prácticas de ingeniería (caching, batch, routing), no con licencias.
 
-**La decisión de presupuesto:** no es subir o bajar el line item. Es separar el budget en dos categorías (uso de developer = scaling con headcount; uso programático = scaling con producto) y asignar a cada una una práctica de gobierno distinta. Si las dos están en el mismo bucket, cualquier conversación de costo se contamina.
+**La decisión de presupuesto:** no es subir o bajar el presupuesto general de AI tools. Es **separar ese presupuesto en dos categorías** (uso de developer = scaling con headcount; uso programático = scaling con producto) y asignar a cada una una práctica de gobierno distinta. Si las dos están en el mismo bucket, cualquier conversación de costo se contamina porque no se sabe qué movió qué.
 
 ---
 
@@ -84,9 +89,7 @@ Los que aprovechen esta ventana van a salir del otro lado entendiendo cómo se g
 
 El detalle técnico de todo lo de arriba, con snippets, settings exactos, el script Python del dashboard personal completo y la matriz de decisión de procurement, está en el documento técnico del proyecto (Link al documento técnico). La versión extendida del artículo, con las objeciones más frecuentes y el paralelismo con la transición a cloud, está en (Link al artículo extendido).
 
-Si tu equipo o BU identifica un caso donde optimización de consumo de tokens puede mover la factura de forma medible, **el Accelerator interno (en fase piloto) puede acompañar la implementación**. Es un programa que ayuda a equipos de ingeniería a modernizar sus prácticas y volverse AI-native, y en los próximos meses se está incorporando un módulo específico sobre optimización de consumo de tokens. También se están preparando **teaching modules self-service** para que los equipos puedan distribuir el conocimiento internamente sin depender de sesiones one-to-one.
-
-El programa está en piloto, **sin sign-up oficial todavía**: la capacidad se asigna por impacto y por encaje con el caso, no por demanda. Si tu equipo tiene un caso candidato, contactá al lead del Accelerator para sumarse a la waitlist del piloto.
+Si tu equipo o BU identifica un caso donde optimización de consumo de tokens puede mover la factura de forma medible, **el Accelerator interno puede acompañar la implementación**. Es un programa que ayuda a equipos de ingeniería a modernizar sus prácticas y volverse AI-native, y en los próximos meses se está incorporando un módulo específico sobre optimización de consumo de tokens. También se están preparando **teaching modules self-service** para que los equipos puedan distribuir el conocimiento internamente sin depender de sesiones one-to-one.
 
 ---
 
